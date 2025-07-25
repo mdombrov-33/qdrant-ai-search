@@ -46,12 +46,12 @@ lint-all: lint-python lint-rust
 
 build-backend:
 	@echo "🐍 Building backend image..."
-	docker build -t $(BACKEND_IMAGE) -f backend/Dockerfile .
+	docker build -t $(BACKEND_IMAGE) -f backend/Dockerfile ./backend
 	minikube image load $(BACKEND_IMAGE)
 
 build-rust:
 	@echo "🦀 Building rust image..."
-	docker build -t $(RUST_IMAGE) -f rust_accelerator/Dockerfile .
+	docker build -t $(RUST_IMAGE) -f rust_accelerator/Dockerfile ./rust_accelerator
 	minikube image load $(RUST_IMAGE)
 
 # ===============================================================================
