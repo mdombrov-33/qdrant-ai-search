@@ -1,0 +1,26 @@
+replicaCount: 1
+
+image:
+  repository: backend
+  tag: latest
+  pullPolicy: IfNotPresent
+
+serviceAccount:
+  create: false
+
+service:
+  type: ClusterIP
+  port: 8000
+
+env:
+  OPENROUTER_API_KEY: "dummy-key" # Replace in real secrets
+  QDRANT_URL: "http://qdrant:6333"
+  RUST_SERVICE_URL: "http://rust_accelerator:5000"
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi

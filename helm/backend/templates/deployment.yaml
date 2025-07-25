@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Chart.Name }}
+  labels:
+    app: {{ .Chart.Name }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Chart.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Chart.Name }}
+    spec:
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: 8000
+          env:
+            - name: OPENROUTER_API_KEY
+              value: {{ .Values.env.OPENROUTER_API_KEY | quote }}
+            - name: QDRANT_URL
+              value: {{ .Values.env.QDRANT_URL | quote }}
+            - name: RUST_SERVICE_URL
+              value: {{ .Values.env.RUST_SERVICE_URL | quote }}
+          resources:
+{{ toYaml .Values.resources | indent 12 }}
