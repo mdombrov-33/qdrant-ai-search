@@ -1,0 +1,12 @@
+replicaCount: 1
+
+image:
+  repository: rust-accelerator
+  tag: latest
+  pullPolicy: Never
+
+service:
+  type: ClusterIP
+  port: 5000
+
+resources: {}

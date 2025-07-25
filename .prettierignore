@@ -1,0 +1,3 @@
+helm/backend/templates/*.yaml
+helm/rust-accelerator/templates/*.yaml
+helm/qdrant/templates/*.yaml

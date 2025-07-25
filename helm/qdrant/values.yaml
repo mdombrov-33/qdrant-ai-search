@@ -1,0 +1,17 @@
+replicaCount: 1
+
+image:
+  repository: qdrant/qdrant
+  tag: v1.7.3
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 6333
+
+resources: {}
+
+env: {}
+
+persistence:
+  enabled: false

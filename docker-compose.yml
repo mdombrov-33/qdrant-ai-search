@@ -13,10 +13,10 @@ services:
 
   rust_accelerator:
     build:
-      context: . # Build context MUST be root of project
-      dockerfile: rust_accelerator/Dockerfile # Dockerfile is inside rust_accelerator/
+      context: ./rust_accelerator
+      dockerfile: Dockerfile
     ports:
-      - "5000:5000" # Rust microservice exposed on host
+      - "5000:5000"
 
   qdrant:
     image: qdrant/qdrant:latest

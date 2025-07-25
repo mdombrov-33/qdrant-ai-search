@@ -57,7 +57,7 @@
 # ------------------------------------------------------------------------------
 
 # Stage 1: Build stage
-FROM rust:1.88 as builder
+FROM rust:1.88 AS builder
 
 WORKDIR /usr/src/rust_accelerator
 
@@ -68,6 +68,7 @@ RUN mkdir src && echo "fn main() {}" > src/main.rs
 RUN cargo build --release || true
 
 RUN rm -f src/main.rs
+
 COPY rust_accelerator/src ./src
 
 RUN cargo build --release
@@ -81,4 +82,4 @@ COPY --from=builder /usr/src/rust_accelerator/target/release/rust_accelerator /u
 
 EXPOSE 5000
 
-CMD ["rust_accelerator"]
+CMD ["/usr/local/bin/rust_accelerator"]
