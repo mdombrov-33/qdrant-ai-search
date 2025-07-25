@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from backend.config import settings
+from config import settings
 
 router = APIRouter()
 

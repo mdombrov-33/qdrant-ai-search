@@ -61,7 +61,7 @@ FROM rust:1.88 AS builder
 
 WORKDIR /usr/src/rust_accelerator
 
-COPY rust_accelerator/Cargo.toml rust_accelerator/Cargo.lock* ./
+COPY Cargo.toml Cargo.lock* ./
 
 RUN mkdir src && echo "fn main() {}" > src/main.rs
 
@@ -69,7 +69,7 @@ RUN cargo build --release || true
 
 RUN rm -f src/main.rs
 
-COPY rust_accelerator/src ./src
+COPY src ./src
 
 RUN cargo build --release
 
