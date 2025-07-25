@@ -6,8 +6,10 @@ __pycache__/
 .env
 
 # Rust
-/target/
-Cargo.lock
+/rust_accelerator/target/
+**/*.rs.bk
+/.cargo/
+/.vscode/
 
 # Virtual Environment
 .venv/
@@ -23,3 +25,4 @@ poetry.lock
 
 # Docker
 qdrant_data/
+
