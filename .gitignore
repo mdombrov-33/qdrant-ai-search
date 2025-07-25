@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.env
+.env
+
+# Rust
+/target/
+Cargo.lock
+
+# VSCode
+.vscode/
+
+# OS
+.DS_Store
+
+# Poetry
+poetry.lock
+
+# Docker
+qdrant_data/
