@@ -9,7 +9,6 @@ __pycache__/
 /rust_accelerator/target/
 **/*.rs.bk
 /.cargo/
-/.vscode/
 
 # Virtual Environment
 .venv/
@@ -26,3 +25,5 @@ poetry.lock
 # Docker
 qdrant_data/
 
+# Ruff
+.ruff_cache/

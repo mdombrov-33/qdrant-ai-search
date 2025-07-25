@@ -1,5 +1,5 @@
 // Bring in necessary parts of actix-web
-use actix_web::{get, App, HttpServer, Responder};
+use actix_web::{App, HttpServer, Responder, get};
 
 // Define GET /ping route with an async handler
 #[get("/ping")]
@@ -17,10 +17,9 @@ async fn main() -> std::io::Result<()> {
     // Start HTTP server
     HttpServer::new(|| {
         // For each connection, spin up a new App with routes
-        App::new()
-            .service(ping)  // Register the /ping route
+        App::new().service(ping) // Register the /ping route
     })
     .bind("localhost:5000")? // Bind to localhost port 5000
-    .run()                  // Start the server
-    .await                  // Wait for server to finish (never, unless killed)
+    .run() // Start the server
+    .await // Wait for server to finish (never, unless killed)
 }

@@ -1,0 +1,28 @@
+repos:
+  - repo: https://github.com/psf/black
+    rev: 25.1.0
+    hooks:
+      - id: black
+        language_version: python3.10
+
+  - repo: https://github.com/charliermarsh/ruff-pre-commit
+    rev: v0.12.5
+    hooks:
+      - id: ruff
+        args: [--fix]
+
+  - repo: local
+    hooks:
+      - id: rust-fmt
+        name: Rust format
+        entry: cargo fmt --manifest-path rust_accelerator/Cargo.toml --all -- --check
+        language: system
+        types: [rust]
+        pass_filenames: false
+
+      - id: rust-clippy
+        name: Rust clippy lint
+        entry: cargo clippy --manifest-path rust_accelerator/Cargo.toml --all-targets --all-features -- -D warnings
+        language: system
+        types: [rust]
+        pass_filenames: false
