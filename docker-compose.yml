@@ -1,0 +1,26 @@
+services:
+  backend:
+    build:
+      context: ./backend # Send only backend/ as build context
+      dockerfile: Dockerfile # Dockerfile must live in backend/
+    ports:
+      - "8000:8000" # Expose FastAPI on host
+    env_file:
+      - ./backend/.env
+    depends_on:
+      - qdrant
+      - rust_accelerator
+
+  rust_accelerator:
+    build:
+      context: . # Build context MUST be root of project
+      dockerfile: rust_accelerator/Dockerfile # Dockerfile is inside rust_accelerator/
+    ports:
+      - "5000:5000" # Rust microservice exposed on host
+
+  qdrant:
+    image: qdrant/qdrant:latest
+    ports:
+      - "6333:6333"
+    volumes:
+      - ./qdrant_data:/qdrant/storage # Persist Qdrant DB files

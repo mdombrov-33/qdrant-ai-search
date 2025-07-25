@@ -73,7 +73,7 @@ COPY rust_accelerator/src ./src
 RUN cargo build --release
 
 # Stage 2: Runtime stage (smallest possible image)
-FROM debian:bullseye-slim
+FROM debian:bookworm-slim
 
 RUN apt-get update && apt-get install -y ca-certificates && rm -rf /var/lib/apt/lists/*
 

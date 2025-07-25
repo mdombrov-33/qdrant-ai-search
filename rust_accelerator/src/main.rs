@@ -12,14 +12,17 @@ async fn ping() -> impl Responder {
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     // Log startup message
-    println!("Starting Rust microservice on http://127.0.0.1:5000");
+    println!("Starting Rust microservice on http://0.0.0.0:5000");
 
     // Start HTTP server
     HttpServer::new(|| {
         // For each connection, spin up a new App with routes
         App::new().service(ping) // Register the /ping route
     })
-    .bind("localhost:5000")? // Bind to localhost port 5000
+    .bind("0.0.0.0:5000")? // Bind to all interfaces on port 5000
     .run() // Start the server
-    .await // Wait for server to finish (never, unless killed)
+    .await?; // Wait for server to finish (never, unless killed), propagate error if any
+
+    println!("Server stopped gracefully");
+    Ok(())
 }
