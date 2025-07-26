@@ -3,6 +3,7 @@ import uuid
 from typing import List
 from qdrant_client import QdrantClient
 from qdrant_client.http.models import Distance, VectorParams, PointStruct
+from qdrant_client.http.exceptions import UnexpectedResponse
 from utils.logging_config import logger
 
 QDRANT_URL = os.getenv("QDRANT_URL", "http://localhost:6333")
@@ -16,28 +17,27 @@ def create_collection(
     """
     Ensure that a Qdrant collection exists.
     If it doesn't, create it with the given vector size and cosine distance.
-
-    Args:
-        client (QdrantClient): The Qdrant client instance.
-        collection_name (str): Name of the collection.
-        vector_size (int): Size (dimension) of the vectors stored in this collection.
-
-    Returns:
-        None
     """
-    if not client.collection_exists(collection_name=collection_name):
-        client.create_collection(
-            collection_name=collection_name,
-            vectors_config=VectorParams(
-                size=vector_size,
-                distance=Distance.COSINE,
-            ),
-        )
-        logger.info(
-            f"Collection '{collection_name}' created with vector size {vector_size}."
-        )
-    else:
-        logger.info(f"Collection '{collection_name}' already exists.")
+    try:
+        if client.collection_exists(collection_name=collection_name):
+            logger.info(
+                f"Collection '{collection_name}' already exists. Skipping creation."
+            )
+            return
+    except UnexpectedResponse as e:
+        # Handle rare case where collection check itself errors (e.g. 404)
+        logger.warning(f"Error checking collection: {e}. Proceeding with creation.")
+
+    client.create_collection(
+        collection_name=collection_name,
+        vectors_config=VectorParams(
+            size=vector_size,
+            distance=Distance.COSINE,
+        ),
+    )
+    logger.info(
+        f"Collection '{collection_name}' created with vector size {vector_size}."
+    )
 
 
 def insert_vectors_batch(

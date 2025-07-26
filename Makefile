@@ -162,9 +162,17 @@ build-rust-for-compose:
 
 deploy-backend: build-backend
 	@echo "🚀 Deploying backend via Helm with image $(BACKEND_IMAGE_TAG)..."
-	helm upgrade --install backend ./helm/backend -n $(NAMESPACE) \
-	  --set image.tag=$(BACKEND_IMAGE_TAG) \
-	  --set image.pullPolicy=IfNotPresent
+	@if [ -n "$(OPENAI_API_KEY)" ]; then \
+		echo "Using OPENAI_API_KEY from environment..."; \
+		helm upgrade --install backend ./helm/backend -n $(NAMESPACE) \
+		  --set image.tag=$(BACKEND_IMAGE_TAG) \
+		  --set secrets.useKubernetesSecret=false \
+		  --set env.OPENAI_API_KEY="$(OPENAI_API_KEY)"; \
+	else \
+		echo "Using Kubernetes secret for OPENAI_API_KEY..."; \
+		helm upgrade --install backend ./helm/backend -n $(NAMESPACE) \
+		  --set image.tag=$(BACKEND_IMAGE_TAG); \
+	fi
 	@echo "✅ Backend deployed to Kubernetes"
 
 deploy-rust: build-rust

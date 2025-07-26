@@ -22,7 +22,14 @@ spec:
             - containerPort: 8000
           env:
             - name: OPENAI_API_KEY
+              {{- if .Values.secrets.useKubernetesSecret }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secrets.secretName }}
+                  key: OPENAI_API_KEY
+              {{- else }}
               value: {{ .Values.env.OPENAI_API_KEY | quote }}
+              {{- end }}
             - name: QDRANT_URL
               value: {{ .Values.env.QDRANT_URL | quote }}
             - name: RUST_SERVICE_URL

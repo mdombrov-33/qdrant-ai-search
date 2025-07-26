@@ -3,14 +3,16 @@ from routes import health, config_routes, upload
 from qdrant_service import create_collection, client
 from contextlib import asynccontextmanager
 from config import settings
+from utils.logging_config import logger
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Runs before startup
-    create_collection(client, settings.QDRANT_COLLECTION_NAME, vector_size=1536)
+    try:
+        create_collection(client, settings.QDRANT_COLLECTION_NAME, vector_size=1536)
+    except Exception as e:
+        logger.warning(f"Failed to create collection on startup: {e}")
     yield
-    # Runs on shutdown (if needed)
 
 
 app = FastAPI(lifespan=lifespan)

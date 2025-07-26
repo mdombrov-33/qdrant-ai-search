@@ -10,9 +10,13 @@ service:
   port: 8000
 
 env:
-  OPENAI_API_KEY: "dummy-key" # Replace in real secrets
+  OPENAI_API_KEY: "dummy-key" # Fallback for local dev
   QDRANT_URL: "http://qdrant:6333"
   RUST_SERVICE_URL: "http://rust_accelerator:5000"
+
+secrets:
+  useKubernetesSecret: true
+  secretName: "openai-secret"
 
 resources:
   requests:
