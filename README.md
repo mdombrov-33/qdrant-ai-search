@@ -556,24 +556,6 @@ pre-commit run --all-files
 - **Rust fmt**: Rust code formatting verification
 - **Clippy**: Rust linting with strict warnings
 
-### Running Tests
-
-```bash
-# Using Makefile (includes formatting and linting)
-make format-all lint-all
-
-# Backend tests
-cd backend
-poetry run pytest tests/ -v --cov
-
-# Rust tests
-cd rust_accelerator
-cargo test
-
-# Integration tests
-docker-compose -f docker-compose.test.yml up --abort-on-container-exit
-```
-
 ---
 
 ## 📄 License
