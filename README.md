@@ -348,7 +348,8 @@ qdrant-ai-search/
 │
 ├── 🛠️ Makefile                 # Development automation
 ├── 🔧 .pre-commit-config.yaml  # Code quality hooks
-└── 📋 docker-compose.yml       # Local development
+└── 📋 docker-compose.dev.yml       # Local development
+└── 📋 docker-compose.prod.yml      # Production development
 ```
 
 ---
@@ -357,48 +358,74 @@ qdrant-ai-search/
 
 ### Development Workflow with Makefile
 
-The project includes a comprehensive Makefile for streamlined development:
+I use a version-controlled build system with Kubernetes and Docker Compose. The project includes a comprehensive Makefile for streamlined development across all environments:
 
 ```bash
-# Code quality and formatting
+# 🔍 Code Quality & Formatting
 make format-all                 # Format Python (black) and Rust (cargo fmt)
 make lint-all                   # Lint Python (ruff) and Rust (clippy)
 
-# Version management and deployment
-make bump-backend-version       # Increment backend version tag
-make deploy-backend            # Build and deploy backend with new version
-make bump-rust-version         # Increment rust version tag  
-make deploy-rust               # Build and deploy rust service with new version
-make deploy-qdrant             # Deploy Qdrant vector database
+# 🏷️ Versioning & Deployment to Kubernetes (Minikube)
+make bump-backend-version       # Bump backend version (vN → vN+1)
+make deploy-backend            # Build + load + deploy backend to cluster
+make bump-rust-version         # Bump Rust version
+make deploy-rust               # Build + load + deploy Rust service
+make deploy-qdrant             # Deploy Qdrant (only needed once or on config change)
+make deploy-all                # Deploy backend + rust + Qdrant
 
-# Service management
-make restart-backend           # Restart backend pods
-make restart-rust              # Restart rust service pods
-make status                    # Check pod status
-make logs SERVICE=backend      # Follow service logs
-make port SERVICE=backend PORT=8000  # Port forward for testing
+# 🔁 Service Management (K8s)
+make restart-backend           # Restart backend deployment
+make restart-rust              # Restart Rust deployment
+make restart-qdrant            # Restart Qdrant
+make status                    # List all pods in namespace
+make logs SERVICE=backend      # Tail logs of specific service
+make port SERVICE=backend PORT=8000  # Port forward service for testing
 
-# Deploy everything
-make deploy-all                # Deploy all services to Kubernetes
+# 🔄 Environment Sync
+make sync-compose-env          # Generate .env file from backend/.version etc.
 ```
 
-### Local Development
-```bash
-# Using Docker Compose
-docker-compose up -d
+### Local Development (Docker Compose)
 
-# Or with Makefile + Kubernetes
-make deploy-all
+For local testing with versioned image tags:
+
+```bash
+# 1. Sync image tags from version files
+make sync-compose-env
+
+# 2. Run local services with correct versions
+docker-compose -f docker-compose.dev.yml up --build
 ```
 
-### Production Kubernetes
-```bash
-# Using Helm directly
-helm install backend ./helm/backend -n qdrant-ai
-helm install qdrant ./helm/qdrant -n qdrant-ai  
-helm install rust-accelerator ./helm/rust-accelerator -n qdrant-ai
+This setup runs `backend`, `rust_accelerator`, and `qdrant` locally using versioned image tags from `.env`.
 
-# Or use Makefile (recommended)
+### Cluster Development (Minikube + Helm)
+
+For Kubernetes development with Minikube:
+
+```bash
+make bump-backend-version       # Optional: only if code changed
+make deploy-backend            # Build → Tag → Load into Minikube → Helm upgrade
+
+make bump-rust-version
+make deploy-rust
+
+make deploy-qdrant             # Only needed initially
+```
+
+Use `make restart-*` if pods hang without rebuilding.
+
+### Production Kubernetes (Helm)
+
+For production deployments:
+
+```bash
+# Manual deployment (advanced)
+helm upgrade --install backend ./helm/backend -n qdrant-ai --set image.tag=v3
+helm upgrade --install rust-accelerator ./helm/rust-accelerator -n qdrant-ai --set image.tag=v3
+helm upgrade --install qdrant ./helm/qdrant -n qdrant-ai
+
+# Recommended: stick to Makefile for safer image sync
 make deploy-all
 ```
 
