@@ -14,10 +14,6 @@ client = QdrantClient(url=QDRANT_URL)
 def create_collection(
     client: QdrantClient, collection_name: str, vector_size: int
 ) -> None:
-    """
-    Ensure that a Qdrant collection exists.
-    If it doesn't, create it with the given vector size and cosine distance.
-    """
     try:
         if client.collection_exists(collection_name=collection_name):
             logger.info(
@@ -25,19 +21,27 @@ def create_collection(
             )
             return
     except UnexpectedResponse as e:
-        # Handle rare case where collection check itself errors (e.g. 404)
         logger.warning(f"Error checking collection: {e}. Proceeding with creation.")
 
-    client.create_collection(
-        collection_name=collection_name,
-        vectors_config=VectorParams(
-            size=vector_size,
-            distance=Distance.COSINE,
-        ),
-    )
-    logger.info(
-        f"Collection '{collection_name}' created with vector size {vector_size}."
-    )
+    try:
+        client.create_collection(
+            collection_name=collection_name,
+            vectors_config=VectorParams(
+                size=vector_size,
+                distance=Distance.COSINE,
+            ),
+        )
+        logger.info(
+            f"Collection '{collection_name}' created with vector size {vector_size}."
+        )
+    except UnexpectedResponse as e:
+        # Handle the 'already exists' error gracefully
+        if "already exists" in str(e):
+            logger.info(
+                f"Collection '{collection_name}' already exists (caught on create)."
+            )
+        else:
+            raise
 
 
 def insert_vectors_batch(
