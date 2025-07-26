@@ -320,6 +320,8 @@ qdrant-ai-search/
 │   ├── embedding.py            # OpenRouter integration
 │   ├── qdrant_service.py       # Vector operations
 │   ├── rust_bridge.py          # Rust service client
+|   ├── utils                   # Utility functions (e.g., text cleaning, preprocessing helpers)
+|     └── text_cleaner.py       # Text cleaning functions   
 │   └── tests/                  # Comprehensive tests
 │
 ├── 🦀 rust_accelerator/        # High-performance scoring service
