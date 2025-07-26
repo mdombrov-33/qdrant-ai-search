@@ -341,6 +341,7 @@ qdrant-ai-search/
 ├── 🐍 backend/                 # FastAPI application
 │   ├── main.py                 # API routes & startup
 │   ├── file_loader.py          # Document processing
+|   ├── routes/                 # Routes (health, upload, config, summarize) 
 │   ├── embedding.py            # OpenAI integration
 │   ├── qdrant_service.py       # Vector operations
 │   ├── rust_bridge.py          # Rust service client
@@ -350,8 +351,11 @@ qdrant-ai-search/
 │
 ├── 🦀 rust_accelerator/        # High-performance scoring service
 │   ├── src/main.rs             # Actix-web server
-│   ├── src/routes/             # API endpoints
+│   ├── src/handlers/           # API endpoints
+|   ├── src/models/             # Data structs 
 │   ├── src/services/           # Business logic
+|   ├── src/utils/              # Utility functions (e.g., text cleaning, preprocessing helpers)
+|   ├── src/error.rs            # Custom error types and conversions   
 │   └── tests/                  # Rust tests
 │
 ├── ☸️ helm/                    # Kubernetes deployment
