@@ -1,4 +1,5 @@
 # 🧠 Qdrant AI Similarity Search
+
 <div align="center">
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -9,7 +10,7 @@
 
 **Production-grade semantic search backend with AI-powered summarization**
 
-*Upload documents, search with natural language, get intelligent results*
+_Upload documents, search with natural language, get intelligent results_
 
 </div>
 
@@ -20,13 +21,15 @@
 This system demonstrates enterprise-grade microservices architecture with cutting-edge AI integration:
 
 ### **Core Technical Stack**
+
 - **Vector Database**: Qdrant for high-performance similarity search
-- **AI Integration**: OpenRouter with OpenAI/Cohere embeddings and LLM completions  
+- **AI Integration**: OpenAI with OpenAI/Cohere embeddings and LLM completions
 - **Polyglot Architecture**: FastAPI backend orchestrating a Rust microservice
 - **Production Infrastructure**: Kubernetes with Helm charts, full observability stack
 - **Automated Operations**: GitHub Actions CI/CD with container registry integration
 
 ### **Key Capabilities**
+
 - **Semantic Document Search**: Upload PDFs/DOCX/TXT and query with natural language
 - **Rust-Accelerated Ranking**: Custom microservice providing sub-10ms result filtering and hybrid scoring
 - **AI-Powered Summarization**: Context-aware text summarization of documents or search results
@@ -38,24 +41,31 @@ This system demonstrates enterprise-grade microservices architecture with cuttin
 ## ✨ Features
 
 ### 🔍 **Semantic Search Engine**
-Vector-powered similarity search using Qdrant enables natural language queries against your document corpus. Documents are chunked, embedded using OpenAI models via OpenRouter, and stored as high-dimensional vectors for lightning-fast retrieval.
 
-### ⚡ **Rust-Powered Result Ranking** 
+Vector-powered similarity search using Qdrant enables natural language queries against your document corpus. Documents are chunked, embedded using OpenAI models, and stored as high-dimensional vectors for lightning-fast retrieval.
+
+### ⚡ **Rust-Powered Result Ranking**
+
 The Rust microservice is the performance backbone of the system. While Qdrant returns raw similarity matches, Rust applies sophisticated filtering and ranking algorithms:
+
 - **Hybrid scoring** combining semantic similarity with keyword relevance
-- **Content quality filtering** removing short or low-information chunks  
+- **Content quality filtering** removing short or low-information chunks
 - **Deduplication logic** preventing redundant results
 - **Sub-10ms processing** for result sets up to 100 candidates
 
 ### 🧠 **AI Summarization Pipeline**
+
 The summarization service operates in two modes:
+
 - **Document Summarization**: Processes raw uploaded text for overview generation
 - **Search Result Summarization**: Takes the top-ranked passages from a search query and generates coherent summaries explaining the answer to the user's question
 
-Both modes leverage OpenRouter's completion API with configurable models and parameters.
+Both modes leverage OpenAI's completion API with configurable models and parameters.
 
 ### 🏗️ **Production Infrastructure**
+
 Built for enterprise deployment with Kubernetes-native patterns:
+
 - **Helm charts** with configurable values for different environments
 - **Resource management** with proper CPU/memory limits and requests
 - **Health checks** and readiness probes for zero-downtime deployments
@@ -65,35 +75,35 @@ Built for enterprise deployment with Kubernetes-native patterns:
 
 ## 🏛️ Architecture
 
-The system uses a polyglot microservices architecture optimized for both performance and scalability. The FastAPI backend orchestrates document processing and search operations, while the Rust microservice handles high-performance result ranking. Qdrant provides vector storage and similarity search, with OpenRouter enabling AI-powered embeddings and summarization.
+The system uses a polyglot microservices architecture optimized for both performance and scalability. The FastAPI backend orchestrates document processing and search operations, while the Rust microservice handles high-performance result ranking. Qdrant provides vector storage and similarity search, with OpenAI enabling AI-powered embeddings and summarization.
 
 ```mermaid
 graph TB
     User[👤 User] --> API[🐍 FastAPI Backend]
-    
+
     API --> Upload[📄 Document Upload]
     API --> Search[🔍 Search Service]
     API --> Summarize[📝 Summarization]
-    
+
     Upload --> Embed[🧠 Embedding Service]
-    Embed --> OpenRouter[🤖 OpenRouter API]
+    Embed --> OpenAI[🤖 OpenAI API]
     Embed --> Qdrant[(🗄️ Qdrant Vector DB)]
-    
+
     Search --> Qdrant
     Search --> Rust[🦀 Rust Accelerator]
     Rust --> Results[📊 Ranked Results]
-    
-    Summarize --> OpenRouter
-    
+
+    Summarize --> OpenAI
+
     subgraph "Monitoring Stack"
         Prometheus[📈 Prometheus]
         Grafana[📊 Grafana]
         Loki[📋 Loki]
     end
-    
+
     API --> Prometheus
     Rust --> Prometheus
-    
+
     subgraph "Kubernetes Cluster"
         API
         Rust
@@ -114,7 +124,7 @@ sequenceDiagram
     participant F as FastAPI
     participant R as Rust Service
     participant Q as Qdrant
-    participant O as OpenRouter
+    participant O as OpenAI
 
     Note over U,O: Document Upload Flow
     U->>F: Upload PDF/DOCX
@@ -147,6 +157,7 @@ sequenceDiagram
 ## 🚀 Quick Start
 
 ### Prerequisites
+
 - Docker & Docker Compose
 - Python 3.11+
 - Rust 1.70+
@@ -159,7 +170,7 @@ sequenceDiagram
 git clone https://github.com/yourusername/qdrant-ai-search.git
 cd qdrant-ai-search
 cp .env.example .env
-# Edit .env with your OpenRouter API key
+# Edit .env with your OpenAI API key
 
 # Setup pre-commit hooks for code quality
 pip install pre-commit
@@ -196,14 +207,17 @@ Visit `http://localhost:8000/docs` for interactive API documentation.
 ### 🟦 **Step 1: Upload a Document**
 
 **What You Do:**
+
 - Click: `Upload Document`
 - Pick a file: `ai_safety.pdf`
 
 **What You See:**
+
 - "✅ Document uploaded successfully"
 - Document appears in uploaded files list
 
 **What Happens Behind the Scenes:**
+
 - PDF gets split into paragraphs
 - Each paragraph gets converted into embeddings (vectors)
 - Vectors are saved in Qdrant along with original text
@@ -213,10 +227,12 @@ Visit `http://localhost:8000/docs` for interactive API documentation.
 ### 🟨 **Step 2: Search the Document**
 
 **What You Do:**
+
 - Type: `What does the author say about AI risk?`
 - Click: `[ Search ]`
 
 **What You See:**
+
 ```
 🔍 Search Results for: "What does the author say about AI risk?"
 
@@ -228,11 +244,12 @@ Visit `http://localhost:8000/docs` for interactive API documentation.
 ```
 
 **What Happens Behind the Scenes:**
+
 1. Your search question is converted into a vector
 2. Qdrant returns the 50 most similar paragraphs
 3. These are sent to the **Rust microservice** which:
    - Applies quality filtering
-   - Combines semantic + keyword scoring  
+   - Combines semantic + keyword scoring
    - Returns the best 5 chunks
 4. You see the actual text paragraphs from your document
 
@@ -241,16 +258,19 @@ Visit `http://localhost:8000/docs` for interactive API documentation.
 ### 🟩 **Step 3: Summarize Results**
 
 **What You Do:**
+
 - Click: `[ Summarize Results ]`
 
 **What You See:**
+
 ```
 🧠 Summary:
 The author expresses concern about existential AI risk, highlighting Bostrom's warnings about superintelligent systems and proposing methods like interpretability and control to manage these risks.
 ```
 
 **What Happens Behind the Scenes:**
-- The 5 best paragraphs from Step 2 are sent to OpenRouter (GPT)
+
+- The 5 best paragraphs from Step 2 are sent to OpenAI
 - AI generates a concise 3-4 sentence summary
 - Summary is displayed to you
 
@@ -259,6 +279,7 @@ The author expresses concern about existential AI risk, highlighting Bostrom's w
 ## 📡 API Reference
 
 ### 🔼 Upload Document
+
 ```http
 POST /upload
 Content-Type: multipart/form-data
@@ -267,6 +288,7 @@ file: <PDF|DOCX|TXT file>
 ```
 
 ### 🔍 Semantic Search
+
 ```http
 POST /search
 Content-Type: application/json
@@ -279,6 +301,7 @@ Content-Type: application/json
 ```
 
 **Response:**
+
 ```json
 {
   "results": [
@@ -297,6 +320,7 @@ Content-Type: application/json
 ```
 
 ### 📝 AI Summarization
+
 ```http
 POST /summarize
 Content-Type: application/json
@@ -317,11 +341,11 @@ qdrant-ai-search/
 ├── 🐍 backend/                 # FastAPI application
 │   ├── main.py                 # API routes & startup
 │   ├── file_loader.py          # Document processing
-│   ├── embedding.py            # OpenRouter integration
+│   ├── embedding.py            # OpenAI integration
 │   ├── qdrant_service.py       # Vector operations
 │   ├── rust_bridge.py          # Rust service client
 |   ├── utils                   # Utility functions (e.g., text cleaning, preprocessing helpers)
-|     └── text_cleaner.py       # Text cleaning functions   
+|     └── text_cleaner.py       # Text cleaning functions
 │   └── tests/                  # Comprehensive tests
 │
 ├── 🦀 rust_accelerator/        # High-performance scoring service
@@ -388,12 +412,14 @@ make sync-compose-env          # Generate .env file from backend/.version etc.
 ### Local Development (Docker Compose)
 
 **For active development (builds from source):**
+
 ```bash
 # Build and run services from source code
 docker-compose -f docker-compose.dev.yml up --build
 ```
 
 **For testing with versioned images:**
+
 ```bash
 # 1. Sync image tags from version files
 make sync-compose-env
@@ -435,10 +461,11 @@ make deploy-all
 ```
 
 ### Environment Variables
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `OPENROUTER_API_KEY` | Your OpenRouter API key | Required |
-| `QDRANT_URL` | Qdrant server URL | `http://localhost:6333` |
+
+| Variable           | Description          | Default                 |
+| ------------------ | -------------------- | ----------------------- |
+| `OPENAI_API_KEY`   | Your OpenAI API key  | Required                |
+| `QDRANT_URL`       | Qdrant server URL    | `http://localhost:6333` |
 | `RUST_SERVICE_URL` | Rust accelerator URL | `http://localhost:5000` |
 
 ---
@@ -446,30 +473,35 @@ make deploy-all
 ## 📈 Observability Stack
 
 ### Monitoring Architecture
+
 The observability stack provides comprehensive insights into system performance and health:
 
 **Prometheus Metrics Collection:**
+
 - HTTP request latency and throughput per endpoint
 - Vector search performance (query time, result count)
 - Rust service response times and filtering efficiency
-- OpenRouter API usage and rate limiting
+- OpenAI API usage and rate limiting
 - Resource utilization (CPU, memory, disk)
 
 **Grafana Dashboards:**
+
 - **Application Performance**: Request rates, error rates, response times
 - **Vector Search Analytics**: Query patterns, similarity score distributions
 - **Rust Microservice**: Processing times, filtering effectiveness
 - **Infrastructure Health**: Pod status, resource consumption, scaling events
 
 **Loki Log Aggregation:**
+
 - Structured JSON logs from all services
 - Request tracing with correlation IDs
 - Error categorization and alerting
 - Search query and result logging for analytics
 
 ### Access Points
+
 - **Grafana Dashboards**: `http://localhost:3000`
-- **Prometheus Metrics**: `http://localhost:9090`  
+- **Prometheus Metrics**: `http://localhost:9090`
 - **Application Logs**: Queryable through Grafana's Loki integration
 
 ---
@@ -479,6 +511,7 @@ The observability stack provides comprehensive insights into system performance 
 ### GitHub Actions Workflows
 
 **Build Pipeline (`.github/workflows/build.yml`):**
+
 - **Linting & Testing**: Run pytest for Python backend, cargo test for Rust
 - **Security Scanning**: Vulnerability checks for dependencies
 - **Docker Build**: Multi-stage builds for optimized container images
@@ -486,13 +519,15 @@ The observability stack provides comprehensive insights into system performance 
 - **Artifact Generation**: Create Helm chart packages
 
 **Deploy Pipeline (`.github/workflows/deploy.yml`):**
+
 - **Environment Validation**: Check cluster connectivity and permissions
 - **Helm Deployment**: Automated rollout with rollback capabilities
-- **Health Checks**: Verify service readiness after deployment  
+- **Health Checks**: Verify service readiness after deployment
 - **Integration Testing**: Run smoke tests against deployed services
 - **Notification**: Slack/email alerts for deployment status
 
 **Trigger Conditions:**
+
 - Build pipeline runs on all PRs and main branch pushes
 - Deploy pipeline runs on main branch merges and manual triggers
 - Automated security updates trigger both pipelines
@@ -515,6 +550,7 @@ pre-commit run --all-files
 ```
 
 **Configured Hooks:**
+
 - **Black**: Python code formatting
 - **Ruff**: Python linting with auto-fix
 - **Rust fmt**: Rust code formatting verification
@@ -530,7 +566,7 @@ make format-all lint-all
 cd backend
 poetry run pytest tests/ -v --cov
 
-# Rust tests  
+# Rust tests
 cd rust_accelerator
 cargo test
 

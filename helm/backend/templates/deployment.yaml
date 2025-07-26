@@ -21,8 +21,8 @@ spec:
           ports:
             - containerPort: 8000
           env:
-            - name: OPENROUTER_API_KEY
-              value: {{ .Values.env.OPENROUTER_API_KEY | quote }}
+            - name: OPENAI_API_KEY
+              value: {{ .Values.env.OPENAI_API_KEY | quote }}
             - name: QDRANT_URL
               value: {{ .Values.env.QDRANT_URL | quote }}
             - name: RUST_SERVICE_URL

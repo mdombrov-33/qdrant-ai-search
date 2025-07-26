@@ -2,7 +2,7 @@ from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    OPENROUTER_API_KEY: str
+    OPENAI_API_KEY: str
     QDRANT_URL: str
     RUST_SERVICE_URL: str
 
