@@ -348,7 +348,8 @@ qdrant-ai-search/
 │
 ├── 🛠️ Makefile                 # Development automation
 ├── 🔧 .pre-commit-config.yaml  # Code quality hooks
-└── 📋 docker-compose.yml       # Local development
+└── 📋 docker-compose.dev.yml       # Local development
+└── 📋 docker-compose.prod.yml      # Production development
 ```
 
 ---
@@ -393,7 +394,7 @@ For local testing with versioned image tags:
 make sync-compose-env
 
 # 2. Run local services with correct versions
-docker-compose -f dev.yml up --build
+docker-compose -f docker-compose.dev.yml up --build
 ```
 
 This setup runs `backend`, `rust_accelerator`, and `qdrant` locally using versioned image tags from `.env`.
