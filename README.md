@@ -358,7 +358,7 @@ qdrant-ai-search/
 
 ### Development Workflow with Makefile
 
-I use a version-controlled build system with Kubernetes and Docker Compose. The project includes a comprehensive Makefile for streamlined development across all environments:
+We use a version-controlled build system with Kubernetes and Docker Compose. The project includes a comprehensive Makefile for streamlined development across all environments:
 
 ```bash
 # 🔍 Code Quality & Formatting
@@ -387,17 +387,22 @@ make sync-compose-env          # Generate .env file from backend/.version etc.
 
 ### Local Development (Docker Compose)
 
-For local testing with versioned image tags:
+**For active development (builds from source):**
+```bash
+# Build and run services from source code
+docker-compose -f docker-compose.dev.yml up --build
+```
 
+**For testing with versioned images:**
 ```bash
 # 1. Sync image tags from version files
 make sync-compose-env
 
-# 2. Run local services with correct versions
+# 2. Run services with pre-built tagged images
 docker-compose -f docker-compose.dev.yml up --build
 ```
 
-This setup runs `backend`, `rust_accelerator`, and `qdrant` locally using versioned image tags from `.env`.
+The `dev.yml` compose file builds from source for active development, while after running `sync-compose-env`, it uses versioned images from `.env` for testing specific releases.
 
 ### Cluster Development (Minikube + Helm)
 
