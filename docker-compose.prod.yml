@@ -1,0 +1,22 @@
+services:
+  backend:
+    image: backend:${BACKEND_IMAGE_TAG}
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./backend/.env
+    depends_on:
+      - qdrant
+      - rust_accelerator
+
+  rust_accelerator:
+    image: rust-accelerator:${RUST_IMAGE_TAG}
+    ports:
+      - "5000:5000"
+
+  qdrant:
+    image: qdrant/qdrant:latest
+    ports:
+      - "6333:6333"
+    volumes:
+      - ./qdrant_data:/qdrant/storage

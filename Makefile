@@ -1,52 +1,54 @@
 # ===============================================================================
-# Makefile for Qdrant AI Search - 3 Services: Backend, Rust, Qdrant
-# =============================================================================== 
+# 🛠️  Makefile for Qdrant AI Search Platform
+# ===============================================================================
 #
-# WHAT WE HAVE:
-# - backend/ (Python FastAPI) 
-# - rust_accelerator/ (Rust microservice)
-# - qdrant (official vector DB)
+# 🧩 Project Structure:
+# - backend/              : FastAPI service (Python)
+# - rust_accelerator/     : Rust microservice (high-performance reranker)
+# - qdrant                : Vector DB (via Docker image)
 #
-# DAILY WORKFLOW:
-# 1. make format-all lint-all          (clean code)
-# 2. make bump-backend-version        (increment backend version tag)
-# 3. make deploy-backend              (build + deploy backend with new version)
-# 4. make bump-rust-version           (increment rust version tag)
-# 5. make deploy-rust                 (build + deploy rust with new version)
-# 6. make restart-*                   (restart pods if stuck)
+# 📦 Versioning System:
+# - backend/.version              → contains tag like `v1`, `v2`, etc.
+# - rust_accelerator/.version     → same format for Rust service
 #
-# CRITICAL LESSON LEARNED: imagePullPolicy=Never prevents K8s image caching hell
+# These version tags are used to:
+# - build Docker images (e.g. backend:v2)
+# - tag Helm deployments
+# - populate Docker Compose `.env` for local dev
 #
-# IMPORTANT NOTE ABOUT IMAGE TAGGING:
-# To avoid Kubernetes running stale cached images when using 'imagePullPolicy=Never',
-# we use explicit versioned image tags instead of 'latest'. This ensures K8s loads
-# the correct new image after each rebuild and deploy.
+# ===============================================================================
+# 🧠 DAILY WORKFLOW SUMMARY
+# ===============================================================================
 #
-# Workflow:
-# 1. Increment tags on each rebuild using make bump-backend-version / bump-rust-version
-# 2. Build and load image with that tag into minikube
-# 3. Deploy with Helm setting image.tag and image.pullPolicy=IfNotPresent
-# 4. Restart deployment to pick up new image (if needed)
+# ▶ Local Dev via Docker Compose:
+#   1. make sync-compose-env          # Sync .env with current image versions
+#   2. docker-compose -f docker-compose.dev.yml up --build
 #
-# This eliminates issues with stale 'latest' tags being cached by Kubernetes.
+# ▶ Cluster Dev via Minikube + Helm:
+#   1. make bump-backend-version      # Optional: If backend changed
+#   2. make deploy-backend            # Build, tag, load, helm upgrade backend
+#   3. make bump-rust-version         # Optional: If rust changed
+#   4. make deploy-rust               # Build, tag, load, helm upgrade rust
+#   5. make deploy-qdrant             # Only needed once or on config change
+#   6. make restart-*                 # Restart deployments without rebuilding
 #
-# To initialize versioning, create files:
-#   backend/.version        # contains "v1" or current backend version tag
-#   rust_accelerator/.version # contains "v1" or current rust version tag
+# ▶ Quality & Maintenance:
+#   - make format-all lint-all        # Clean + check code (Python & Rust)
+#   - make deploy-all                 # Deploy all services (backend, rust, qdrant)
 #
 # ===============================================================================
 
 NAMESPACE := qdrant-ai
 
-# Read current versions from version files
+# Read current image tags from version files
 BACKEND_IMAGE_TAG := $(shell cat backend/.version)
-BACKEND_IMAGE := backend:$(BACKEND_IMAGE_TAG)
-
 RUST_IMAGE_TAG := $(shell cat rust_accelerator/.version)
+
+BACKEND_IMAGE := backend:$(BACKEND_IMAGE_TAG)
 RUST_IMAGE := rust-accelerator:$(RUST_IMAGE_TAG)
 
 # ===============================================================================
-# Code formatting and linting
+# 🎨 Code Quality
 # ===============================================================================
 
 format-python:
@@ -65,65 +67,73 @@ format-all: format-python format-rust
 lint-all: lint-python lint-rust
 
 # ===============================================================================
-# Version bumping commands (increments v1 → v2, etc.)
+# 🔁 Version Management
 # ===============================================================================
 
 bump-backend-version:
-	@echo "Bumping backend version..."
+	@echo "🔖 Bumping backend version..."
 	@current=$$(cat backend/.version); \
-	major=$${current%[a-z]*}; \
-	minor=$${current#v}; \
-	new_minor=$$(($${minor}+1)); \
-	new_version="v$${new_minor}"; \
-	echo $${new_version} > backend/.version; \
-	echo "New backend version: $${new_version}"
+	 minor=$${current#v}; \
+	 new_minor=$$(($${minor}+1)); \
+	 new_version="v$${new_minor}"; \
+	 echo $${new_version} > backend/.version; \
+	 echo "✅ New backend version: $${new_version}"
 
 bump-rust-version:
-	@echo "Bumping rust version..."
+	@echo "🔖 Bumping rust version..."
 	@current=$$(cat rust_accelerator/.version); \
-	major=$${current%[a-z]*}; \
-	minor=$${current#v}; \
-	new_minor=$$(($${minor}+1)); \
-	new_version="v$${new_minor}"; \
-	echo $${new_version} > rust_accelerator/.version; \
-	echo "New rust version: $${new_version}"
+	 minor=$${current#v}; \
+	 new_minor=$$(($${minor}+1)); \
+	 new_version="v$${new_minor}"; \
+	 echo $${new_version} > rust_accelerator/.version; \
+	 echo "✅ New rust version: $${new_version}"
 
 # ===============================================================================
-# Docker image building (builds + loads into minikube)
+# 🐳 Docker Image Builds (Minikube/K8s)
 # ===============================================================================
 
 build-backend:
-	@echo "🐍 Building backend image with tag $(BACKEND_IMAGE_TAG)..."
+	@echo "🐍 Building backend image $(BACKEND_IMAGE)..."
 	docker build -t $(BACKEND_IMAGE) -f backend/Dockerfile ./backend
 	minikube image load $(BACKEND_IMAGE)
 
 build-rust:
-	@echo "🦀 Building rust image with tag $(RUST_IMAGE_TAG)..."
+	@echo "🦀 Building rust image $(RUST_IMAGE)..."
 	docker build -t $(RUST_IMAGE) -f rust_accelerator/Dockerfile ./rust_accelerator
 	minikube image load $(RUST_IMAGE)
 
 # ===============================================================================
-# Kubernetes deployment (build + helm deploy)
+# ☸️ Helm + Kubernetes Deployment
 # ===============================================================================
 
 deploy-backend: build-backend
-	@echo "🚀 Deploying backend with image tag $(BACKEND_IMAGE_TAG)..."
+	@echo "🚀 Deploying backend via Helm with image $(BACKEND_IMAGE_TAG)..."
 	helm upgrade --install backend ./helm/backend -n $(NAMESPACE) \
 	  --set image.tag=$(BACKEND_IMAGE_TAG) \
 	  --set image.pullPolicy=IfNotPresent
 
 deploy-rust: build-rust
-	@echo "🚀 Deploying rust accelerator with image tag $(RUST_IMAGE_TAG)..."
+	@echo "🚀 Deploying rust-accelerator via Helm with image $(RUST_IMAGE_TAG)..."
 	helm upgrade --install rust-accelerator ./helm/rust-accelerator -n $(NAMESPACE) \
 	  --set image.tag=$(RUST_IMAGE_TAG) \
 	  --set image.pullPolicy=IfNotPresent
 
 deploy-qdrant:
-	@echo "🚀 Deploying qdrant..."
+	@echo "🚀 Deploying Qdrant via Helm..."
 	helm upgrade --install qdrant ./helm/qdrant -n $(NAMESPACE)
 
 # ===============================================================================
-# Restart services (without rebuilding)
+# 🐳 Docker Compose: Sync .env from version files
+# ===============================================================================
+
+sync-compose-env:
+	@echo "🔄 Writing backend + rust versions into .env for Docker Compose..."
+	@echo "BACKEND_IMAGE_TAG=$(BACKEND_IMAGE_TAG)" > .env
+	@echo "RUST_IMAGE_TAG=$(RUST_IMAGE_TAG)" >> .env
+	@echo "✅ .env written: backend=$(BACKEND_IMAGE_TAG), rust=$(RUST_IMAGE_TAG)"
+
+# ===============================================================================
+# 🔁 Restart Deployed K8s Services (no rebuild)
 # ===============================================================================
 
 restart-backend:
@@ -136,25 +146,23 @@ restart-qdrant:
 	kubectl rollout restart deployment/qdrant -n $(NAMESPACE)
 
 # ===============================================================================
-# Convenience targets
+# 🧪 Debug / Misc Utilities
 # ===============================================================================
 
-# Deploy everything from scratch
 deploy-all: deploy-backend deploy-rust deploy-qdrant
 
-# Check what's running
 status:
 	kubectl get pods -n $(NAMESPACE)
 
-# Follow logs (usage: make logs SERVICE=backend)
+# Usage: make logs SERVICE=backend
 logs:
 	kubectl logs -n $(NAMESPACE) deployment/$(SERVICE) -f
 
-# Port forward for testing (usage: make port SERVICE=backend PORT=8000)
+# Usage: make port SERVICE=backend PORT=8000
 port:
 	kubectl port-forward -n $(NAMESPACE) deployment/$(SERVICE) $(PORT):$(PORT)
 
 .PHONY: format-python lint-python format-rust lint-rust format-all lint-all \
         build-backend build-rust deploy-backend deploy-rust deploy-qdrant \
         restart-backend restart-rust restart-qdrant deploy-all status logs port \
-        bump-backend-version bump-rust-version
+        bump-backend-version bump-rust-version sync-compose-env
