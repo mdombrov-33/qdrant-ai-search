@@ -1,6 +1,7 @@
 pub mod handlers;
 pub mod models;
 pub mod services;
+pub mod utils;
 
 // Import required modules from the actix-web crate
 // - App: to define routes
