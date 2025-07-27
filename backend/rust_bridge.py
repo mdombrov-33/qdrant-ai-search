@@ -12,7 +12,7 @@ class RustServiceError(Exception):
 
 async def re_rank_results(
     query: str, results: List[Dict[str, Any]], limit: int = 10, timeout: float = 5.0
-) -> List[Dict[str, Any]]:
+) -> Dict[str, Any]:
     """
     Send search results to Rust service for re-ranking and filtering.
 
@@ -23,7 +23,7 @@ async def re_rank_results(
         timeout (float): Request timeout in seconds
 
     Returns:
-        List[Dict]: Re-ranked and filtered results
+        Dict[str, Any]: Re-ranked and filtered results
 
     Raises:
         RustServiceError: If Rust service fails or times out
@@ -35,7 +35,7 @@ async def re_rank_results(
 
     if not results:
         logger.debug("No results to re-rank, returning empty list")
-        return []
+        return {"results": [], "query": query, "limit": limit}
 
     # Prepare payload for Rust service
     payload = {
@@ -67,40 +67,21 @@ async def re_rank_results(
                 headers={"Content-Type": "application/json"},
             )
 
-            logger.debug(f"Rust service responded with status: {response.status_code}")
+        logger.debug(f"Rust service responded with status: {response.status_code}")
 
-            if response.status_code == 200:
-                rust_response = response.json()
-                results_count = len(rust_response.get("results", []))
-                logger.info(
-                    f"Successfully re-ranked results, returning {results_count} items"
-                )
+        if response.status_code == 200:
+            rust_response = response.json()
+            results_count = len(rust_response.get("results", []))
+            logger.info(
+                f"Successfully re-ranked results, returning {results_count} items"
+            )
 
-                # Convert back to original format
-                re_ranked = []
-                for item in rust_response.get("results", []):
-                    re_ranked.append(
-                        {
-                            "id": item["id"],
-                            "score": item["score"],
-                            "payload": {
-                                "text": item["text"],
-                                "file_name": item["metadata"].get("file_name", ""),
-                                "content_type": item["metadata"].get(
-                                    "content_type", ""
-                                ),
-                            },
-                        }
-                    )
+            return rust_response
 
-                return re_ranked
-
-            else:
-                error_msg = (
-                    f"Rust service returned {response.status_code}: {response.text}"
-                )
-                logger.error(error_msg)
-                raise RustServiceError(error_msg)
+        else:
+            error_msg = f"Rust service returned {response.status_code}: {response.text}"
+            logger.error(error_msg)
+            raise RustServiceError(error_msg)
 
     except httpx.TimeoutException:
         error_msg = "Rust service timeout"

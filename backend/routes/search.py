@@ -8,7 +8,6 @@ from config import settings
 from utils.logging_config import logger
 import time
 
-
 router = APIRouter()
 
 
@@ -56,32 +55,43 @@ async def search_documents(request: SearchRequest):
             return SearchResponse(results=[], query_time_ms=0, total_found=0)
 
         try:
-            ranked_results = await re_rank_results(
+            ranked_response = await re_rank_results(
                 query=request.query, results=raw_results, limit=request.limit
             )
+
+            ranked_results = ranked_response["results"]
+            processing_time_ms = ranked_response.get("processing_time_ms")
+
         except Exception as e:
             logger.error(f"Re-ranking failed: {e}")
             ranked_results = raw_results[: request.limit]
+            processing_time_ms = None  # fallback to Python timer
 
         search_results = []
         for result in ranked_results:
             search_results.append(
                 SearchResult(
                     id=str(result["id"]),
-                    text=result["payload"]["text"],
+                    text=(
+                        result["payload"]["text"]
+                        if "payload" in result
+                        else result["text"]
+                    ),
                     score=result["score"],
-                    metadata={
-                        "file_name": result["payload"].get("file_name"),
-                        "content_type": result["payload"].get("content_type"),
-                    },
+                    metadata=(
+                        result["payload"]["metadata"]
+                        if "payload" in result and "metadata" in result["payload"]
+                        else result.get("metadata", {})
+                    ),
                 )
             )
 
         end_time = time.time()
+        fallback_ms = int((end_time - start_time) * 1000)
 
         return SearchResponse(
             results=search_results,
-            query_time_ms=int((end_time - start_time) * 1000),
+            query_time_ms=processing_time_ms or fallback_ms,
             total_found=len(raw_results),
         )
 
