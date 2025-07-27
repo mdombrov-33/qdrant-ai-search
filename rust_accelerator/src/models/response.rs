@@ -1,8 +1,8 @@
 use super::request::Metadata; // Import the Metadata struct from the request module
-use serde::Deserialize; // Allows this struct to be built from JSON
+use serde::{Deserialize, Serialize}; // Allows this struct to be built from JSON
 
 /// A single result item returned *after* the Rust service re-ranks it
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct ReRankedResult {
     /// Unique identifier for the document chunk
     pub id: String,
@@ -18,7 +18,7 @@ pub struct ReRankedResult {
 }
 
 /// The full response body returned from the /re-rank endpoint
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct ReRankResponse {
     /// List of top re-ranked results returned to FastAPI
     pub results: Vec<ReRankedResult>,

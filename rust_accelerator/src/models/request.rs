@@ -1,7 +1,7 @@
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 /// Metadata about the source of the text (filename, content type, etc.)
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct Metadata {
     /// Original file name, e.g. "ai_safety.pdf"
     pub file_name: String,
@@ -11,7 +11,7 @@ pub struct Metadata {
 }
 
 /// Single result returned from FastAPI (before reranking)
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct SearchResultInput {
     /// Unique identifier for the chunk (UUID or other string)
     pub id: String,
@@ -27,7 +27,7 @@ pub struct SearchResultInput {
 }
 
 /// Full incoming POST body to /re-rank endpoint
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct ReRankRequest {
     /// Natural language query string
     pub query: String,
