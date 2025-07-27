@@ -86,7 +86,9 @@ impl DocumentReRanker {
         // === STEP 2: QUERY PREPROCESSING ===
         // Extract meaningful features from the search query once, then reuse
         // This is like tokenizing and preprocessing in NLP pipelines
-        let query_features = self.text_analyzer.extract_query_features(&req.query);
+        let query_features = self
+            .text_analyzer
+            .extract_query_features(&req.query, req.idf_map.clone());
 
         // === STEP 3: PARALLEL RESULT PROCESSING ===
         // Process all results in parallel, filtering and enhancing scores

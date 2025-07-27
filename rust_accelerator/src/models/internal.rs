@@ -25,6 +25,8 @@ pub struct QueryFeatures {
     /// Frequency count for TF-IDF style weighting
     /// Example: {"AI": 1, "risks": 1}
     pub word_frequencies: HashMap<String, usize>,
+
+    pub idf_map: HashMap<String, f64>,
 }
 
 /// Internal wrapper for results during processing.

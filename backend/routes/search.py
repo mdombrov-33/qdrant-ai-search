@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import List
+from utils.idf import compute_idf
 from embedding import get_embedding
 from qdrant_service import search_vectors, client
 from rust_bridge import re_rank_results
@@ -15,6 +16,7 @@ class SearchRequest(BaseModel):
     query: str
     limit: int = 10
     threshold: float = 0.7
+    idf_map: dict = {}
 
 
 class SearchResult(BaseModel):
@@ -54,9 +56,15 @@ async def search_documents(request: SearchRequest):
         if not raw_results:
             return SearchResponse(results=[], query_time_ms=0, total_found=0)
 
+        documents = [result["payload"]["text"] for result in raw_results]
+        idf_map = compute_idf(documents)
+
         try:
             ranked_response = await re_rank_results(
-                query=request.query, results=raw_results, limit=request.limit
+                query=request.query,
+                results=raw_results,
+                limit=request.limit,
+                idf_map=idf_map,
             )
 
             ranked_results = ranked_response["results"]

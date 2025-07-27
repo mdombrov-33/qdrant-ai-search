@@ -163,8 +163,9 @@ impl ScoreCalculator {
                 // Calculate boost based on:
                 // - Term frequency in query (sqrt-weighted)
                 // - Term frequency in text
-                let weight = (*query_frequency as f64).sqrt();
-                let boost = (text_frequency as f64) * weight * 0.1; // 10% per match
+                let idf = query_features.idf_map.get(term).copied().unwrap_or(1.0);
+                let weight = ((*query_frequency as f64).sqrt()) * idf;
+                let boost = (text_frequency as f64) * weight * 0.1;
                 total_boost += boost;
             }
         }

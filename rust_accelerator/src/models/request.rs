@@ -4,6 +4,7 @@
 //! They correspond to the JSON that FastAPI sends us.
 
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 /// The main request structure for the /re-rank endpoint.
 ///
@@ -28,6 +29,10 @@ pub struct ReRankRequest {
 
     /// Maximum number of results to return after re-ranking
     pub limit: usize,
+
+    /// Optional inverse document frequency boost map
+    #[serde(default)]
+    pub idf_map: Option<HashMap<String, f64>>,
 }
 
 /// A single search result from Qdrant.

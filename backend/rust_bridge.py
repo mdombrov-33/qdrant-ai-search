@@ -2,6 +2,7 @@ import httpx
 from typing import List, Dict, Any
 from config import settings
 from utils.logging_config import logger
+from typing import Optional
 
 
 class RustServiceError(Exception):
@@ -11,7 +12,11 @@ class RustServiceError(Exception):
 
 
 async def re_rank_results(
-    query: str, results: List[Dict[str, Any]], limit: int = 10, timeout: float = 5.0
+    query: str,
+    results: List[Dict[str, Any]],
+    limit: int = 10,
+    idf_map: Optional[dict[str, float]] = None,
+    timeout: float = 5.0,
 ) -> Dict[str, Any]:
     """
     Send search results to Rust service for re-ranking and filtering.
@@ -53,6 +58,7 @@ async def re_rank_results(
             for result in results
         ],
         "limit": limit,
+        "idf_map": idf_map or {},
     }
 
     try:

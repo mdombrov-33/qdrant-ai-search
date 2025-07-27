@@ -45,17 +45,21 @@ impl TextAnalyzer {
     /// 1. Normalize text (lowercase)
     /// 2. Tokenize (split into words and phrases)
     /// 3. Filter stop words and short terms
-    /// 4. Apply stemming
+    /// 4. Apply stemming (basic trimming of trailing 's')
     /// 5. Count frequencies
     ///
     /// Example: "How do neural networks learn?"
     /// → meaningful_terms: ["neural", "networks", "learn", "neural networks"]
     /// → word_frequencies: {"neural":1, "networks":1, "learn":1, "neural networks":1}
-    pub fn extract_query_features(&self, query: &str) -> QueryFeatures {
+    pub fn extract_query_features(
+        &self,
+        query: &str,
+        idf_map: Option<HashMap<String, f64>>,
+    ) -> QueryFeatures {
         // Step 1: Normalize to lowercase for consistent matching
         let normalized = query.to_lowercase();
 
-        // Step 2: Extract meaningful single words with stemming
+        // Step 2: Extract meaningful single words with basic stemming
         let single_words: Vec<String> = normalized
             .split_whitespace()
             .filter(|word| !self.stop_words.contains(*word) && word.len() >= 2)
@@ -72,7 +76,7 @@ impl TextAnalyzer {
             }
         }
 
-        // Step 4: Combine terms
+        // Step 4: Combine single words and phrases into one vector
         let all_terms: Vec<String> = single_words.into_iter().chain(phrases).collect();
 
         // Step 5: Count term frequencies
@@ -81,6 +85,9 @@ impl TextAnalyzer {
             *word_frequencies.entry(term.clone()).or_insert(0) += 1;
         }
 
-        QueryFeatures { word_frequencies }
+        QueryFeatures {
+            word_frequencies,
+            idf_map: idf_map.unwrap_or_default(),
+        }
     }
 }
