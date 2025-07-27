@@ -18,7 +18,7 @@ pub struct SimilarityCalculator {
 impl SimilarityCalculator {
     pub fn new() -> Self {
         Self {
-            deduplication_threshold: 0.8, // 80% similarity = duplicate
+            deduplication_threshold: 0.95, // 95% similarity = duplicate
         }
     }
 

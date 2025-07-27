@@ -43,34 +43,42 @@ impl TextAnalyzer {
     ///
     /// This is like the preprocessing step in NLP pipelines:
     /// 1. Normalize text (lowercase)
-    /// 2. Tokenize (split into words)
-    /// 3. Filter stop words
-    /// 4. Count frequencies
+    /// 2. Tokenize (split into words and phrases)
+    /// 3. Filter stop words and short terms
+    /// 4. Apply stemming
+    /// 5. Count frequencies
     ///
-    /// Example: "What are the AI risks in 2024?"
-    /// → meaningful_words: ["AI", "risks", "2024"]
-    /// → word_frequencies: {"AI": 1, "risks": 1, "2024": 1}
+    /// Example: "How do neural networks learn?"
+    /// → meaningful_terms: ["neural", "networks", "learn", "neural networks"]
+    /// → word_frequencies: {"neural":1, "networks":1, "learn":1, "neural networks":1}
     pub fn extract_query_features(&self, query: &str) -> QueryFeatures {
         // Step 1: Normalize to lowercase for consistent matching
         let normalized = query.to_lowercase();
 
-        // Step 2: Split into words and filter
-        let meaningful_words: Vec<String> = normalized
-            .split_whitespace() // Split on any whitespace
-            .filter(|word| {
-                // Keep words that are:
-                // - Not stop words (using HashSet for O(1) lookup)
-                // - At least 2 characters long
-                !self.stop_words.contains(*word) && word.len() >= 2
-            })
-            .map(|s| s.to_string()) // Convert &str to owned String
+        // Step 2: Extract meaningful single words with stemming
+        let single_words: Vec<String> = normalized
+            .split_whitespace()
+            .filter(|word| !self.stop_words.contains(*word) && word.len() >= 2)
+            .map(|word| word.trim_end_matches('s').to_string())
             .collect();
 
-        // Step 3: Count word frequencies (like Python's Counter)
+        // Step 3: Extract meaningful 2-word phrases
+        let words: Vec<&str> = normalized.split_whitespace().collect();
+        let mut phrases = Vec::new();
+
+        for window in words.windows(2) {
+            if !self.stop_words.contains(window[0]) && !self.stop_words.contains(window[1]) {
+                phrases.push(window.join(" "));
+            }
+        }
+
+        // Step 4: Combine terms
+        let all_terms: Vec<String> = single_words.into_iter().chain(phrases).collect();
+
+        // Step 5: Count term frequencies
         let mut word_frequencies = HashMap::new();
-        for word in &meaningful_words {
-            // Get current count (or 0 if not exists) and increment
-            *word_frequencies.entry(word.clone()).or_insert(0) += 1;
+        for term in &all_terms {
+            *word_frequencies.entry(term.clone()).or_insert(0) += 1;
         }
 
         QueryFeatures { word_frequencies }

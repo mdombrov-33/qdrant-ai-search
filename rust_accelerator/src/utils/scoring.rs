@@ -24,7 +24,7 @@ impl Default for ScoreWeights {
     fn default() -> Self {
         Self {
             text_quality: 1.0,        // Full weight - quality is crucial
-            keyword_matching: 0.3,    // 30% boost max - helps but don't overdo
+            keyword_matching: 0.5,    // 50% boost max - helps but don't overdo
             length_optimization: 1.0, // Full weight - length matters a lot
             position_decay: 0.05,     // Small weight - slight preference for earlier results
             completeness: 0.1,        // Small boost - nice to have complete sentences
@@ -107,57 +107,70 @@ impl ScoreCalculator {
     fn calculate_text_quality_factor(&self, text: &str) -> f64 {
         let text_len = text.len();
 
-        // Severely penalize very short text (likely fragments or noise)
+        // 1. Length check - minimum 20 chars
         if text_len < 20 {
-            return 0.1; // 90% penalty
+            // Scale penalty linearly from 10-20 chars
+            return 0.3 + (text_len as f64 / 20.0 * 0.7);
         }
 
-        // Penalize text without proper sentence endings (likely fragments)
-        if !text.contains('.') && !text.contains('!') && !text.contains('?') {
-            return 0.7; // 30% penalty
-        }
-
-        // Bonus for well-formed text with multiple sentences
+        // 2. Sentence structure analysis
+        let ends_with_punctuation = text.trim().ends_with(['.', '!', '?']);
         let sentence_count = text.matches(['.', '!', '?']).count();
-        match sentence_count {
-            0 => 0.8,     // No sentences - probably a fragment
-            1 => 1.0,     // One sentence - neutral
-            2..=5 => 1.2, // Multiple sentences - good content
-            _ => 1.1,     // Too many sentences - might be verbose
+
+        // 3. Quality scoring
+        match (ends_with_punctuation, sentence_count) {
+            // Ideal case: Properly terminated with 1-3 sentences
+            (true, 1..=3) => 1.3, // Good quality - 30% boost
+
+            // Good but could be better
+            (true, 0) => 0.9, // Has punctuation but no full sentences
+            (true, _) => 1.1, // Many sentences but properly terminated
+
+            // Problem cases
+            (false, 0) => 0.7, // No punctuation at all
+            (false, _) => 0.8, // Mid-sentence fragments
         }
     }
 
-    /// Calculates keyword matching boost using TF-IDF inspired scoring.
+    /// Calculates keyword matching boost using phrase-aware scoring.
     ///
-    /// This algorithm rewards results that contain words from the search query.
-    /// It uses frequency weighting: if a query word appears multiple times in
-    /// the query, matches for that word get higher scores.
+    /// This algorithm rewards results that contain words and phrases from the search query.
+    /// It provides stronger boosts for:
+    /// 1. Exact phrase matches (e.g. "neural networks")
+    /// 2. Multiple occurrences of query terms
+    /// 3. Rare terms in the query
     ///
-    /// Example: Query "machine learning machine"
-    /// - "machine" appears twice, so gets higher weight
-    /// - Results containing "machine" get bigger boost than those with "learning"
+    /// Example: Query "convolutional layers"
+    /// - Exact phrase match: +0.3 boost
+    /// - Individual word matches: +0.1 each
+    /// - Total possible boost: 0.5 (50%)
     fn calculate_keyword_boost(&self, text: &str, query_features: &QueryFeatures) -> f64 {
         let text_lower = text.to_lowercase();
         let mut total_boost = 0.0;
 
-        // Check each meaningful word from the query
-        for (word, query_frequency) in &query_features.word_frequencies {
-            // Count how many times this word appears in the result text
-            let text_frequency = text_lower.matches(word).count();
+        // Check each term from the query (both words and phrases)
+        for (term, query_frequency) in &query_features.word_frequencies {
+            // Case 1: Exact phrase match (e.g. "neural networks")
+            if term.contains(' ') && text_lower.contains(term) {
+                // Strong boost for exact phrase matches
+                total_boost += 0.4 * (*query_frequency as f64);
+                continue;
+            }
 
+            // Case 2: Individual word matches
+            let text_frequency = text_lower.matches(term).count();
             if text_frequency > 0 {
-                // Calculate boost using TF-IDF inspired weighting:
-                // - More frequent in query = higher weight
-                // - More frequent in text = higher boost
-                // - Square root to prevent dominance of very frequent words
+                // Calculate boost based on:
+                // - Term frequency in query (sqrt-weighted)
+                // - Term frequency in text
                 let weight = (*query_frequency as f64).sqrt();
-                let boost = (text_frequency as f64) * weight * 0.05; // 5% per match
+                let boost = (text_frequency as f64) * weight * 0.1; // 10% per match
                 total_boost += boost;
             }
         }
 
-        // Cap the total boost to prevent one result from dominating
-        total_boost.min(0.3) // Maximum 30% boost
+        // Cap the total boost to prevent over-domination
+        total_boost.min(0.5) // Maximum 50% boost
     }
 
     /// Calculates length optimization factor.
