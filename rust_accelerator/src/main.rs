@@ -39,7 +39,7 @@ async fn main() -> std::io::Result<()> {
     // Set RUST_LOG=info for normal logging, RUST_LOG=debug for verbose logging
     env_logger::init();
 
-    info!("🦀 Starting Rust Accelerator Service");
+    info!("Starting Rust Accelerator Service");
 
     // Start HTTP server
     HttpServer::new(|| {

@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from routes import health, config_routes, upload
+from routes import health, config_routes, upload, search
 from qdrant_service import create_collection, client
 from contextlib import asynccontextmanager
 from config import settings
@@ -20,3 +20,4 @@ app = FastAPI(lifespan=lifespan)
 app.include_router(health.router)
 app.include_router(config_routes.router)
 app.include_router(upload.router, prefix="/api")
+app.include_router(search.router, prefix="/api")

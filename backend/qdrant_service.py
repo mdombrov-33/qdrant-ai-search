@@ -1,10 +1,10 @@
 import os
 import uuid
 from typing import List
+from utils.logging_config import logger
 from qdrant_client import QdrantClient
 from qdrant_client.http.models import Distance, VectorParams, PointStruct
 from qdrant_client.http.exceptions import UnexpectedResponse
-from utils.logging_config import logger
 
 QDRANT_URL = os.getenv("QDRANT_URL", "http://localhost:6333")
 
@@ -92,3 +92,52 @@ def insert_vectors_batch(
                 f"Inserted batch of {len(batch)} vectors into '{collection_name}'."
             )
             batch.clear()
+
+
+def search_vectors(
+    client: QdrantClient,
+    collection_name: str,
+    query_vector: List[float],
+    limit: int = 10,
+    score_threshold: float = 0.7,
+) -> List[dict]:
+    """
+    Search for vectors in a Qdrant collection.
+
+    Args:
+        client (QdrantClient): The Qdrant client.
+        collection_name (str): Target collection name.
+        query_vector (List[float]): The vector to search for.
+        limit (int): Maximum number of results to return.
+        score_threshold (float): Minimum score threshold for results.
+
+    Returns:
+        List[dict]: List of search results with 'id', 'score', and 'payload'.
+    """
+    try:
+        search_results = client.search(
+            collection_name=collection_name,
+            query_vector=query_vector,
+            limit=limit,
+            score_threshold=score_threshold,
+            with_payload=True,
+            with_vectors=False,  # Don't return vectors to save bandwidth
+        )
+
+        # Convert to dict for easier handling
+        results = []
+        for result in search_results:
+            results.append(
+                {
+                    "id": str(result.id),
+                    "score": result.score,
+                    "payload": result.payload,
+                }
+            )
+
+        logger.info(f"Found {len(results)} results for search query")
+        return results
+
+    except Exception as e:
+        logger.error(f"Error during search: {e}")
+        raise
