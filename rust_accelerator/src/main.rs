@@ -1,42 +1,58 @@
-pub mod error;
-pub mod handlers;
-pub mod models;
-pub mod services;
-pub mod utils;
+//! Main entry point for the Rust re-ranking service.
+//!
+//! This file sets up the HTTP server, configures logging, registers routes,
+//! and starts the application. It's like the main() function in other languages
+//! or the app setup in Express.js.
 
-// Import required modules from the actix-web crate
-// - App: to define routes
-// - HttpServer: to run the server
-// - web: contains helpers like route() and handler registration
-use actix_web::{App, HttpServer, web};
+use actix_web::{App, HttpServer, middleware::Logger, web};
+use log::info;
 
-// Import the specific handler function for health check
-use handlers::{health::health_check, rerank::rerank_handler};
+mod error;
+mod handlers;
+mod models;
+mod services;
+mod utils;
 
-// The main entry point for our async Actix-web server
-// #[actix_web::main] is a procedural macro that:
-// - Sets up the async runtime (like tokio::main)
-// - Prepares Actix's environment
+/// Main function - entry point of the application.
+///
+/// The `#[actix_web::main]` attribute sets up the async runtime.
+/// This is similar to how Node.js handles async operations, but Rust
+/// requires explicit async runtime setup.
+///
+/// In Node.js/Express, the equivalent would be:
+/// ```javascript
+/// const express = require('express');
+/// const app = express();
+///
+/// app.use(express.json());
+/// app.get('/health', healthHandler);
+/// app.post('/re-rank', rerankHandler);
+///
+/// app.listen(5000, () => {
+///   console.log('Server running on port 5000');
+/// });
+/// ```
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    // Print a message to stderr when the server starts
-    // (This is just logging, not required for logic)
-    eprintln!("Starting server...");
+    // Initialize logging
+    // This sets up structured logging based on RUST_LOG environment variable
+    // Set RUST_LOG=info for normal logging, RUST_LOG=debug for verbose logging
+    env_logger::init();
 
-    // HttpServer::new is a function that creates a new server instance
-    // - The `::` syntax means "access an associated function" (like static methods in Python/TS)
-    // - This is like calling `HttpServer.new()` in OOP terms
+    info!("🦀 Starting Rust Accelerator Service");
 
-    // The closure `|| App::new()` builds our app's routing configuration
-    // - Each request spawns a new `App` instance
-    // - .route() adds a GET endpoint at /health, using the health_check handler
-
+    // Start HTTP server
     HttpServer::new(|| {
         App::new()
-            .route("/health", web::get().to(health_check))
-            .service(rerank_handler)
+            // Add request logging middleware (like Morgan in Express)
+            .wrap(Logger::default())
+            // Register routes
+            .route("/health", web::get().to(handlers::health::health_check))
+            .route("/re-rank", web::post().to(handlers::rerank::handle_rerank))
+            // Set JSON payload size limit (default is 256KB, we increase it)
+            .app_data(web::JsonConfig::default().limit(1024 * 1024)) // 1MB limit
     })
-    .bind("0.0.0.0:5000")? // Bind the server to listen on all interfaces (0.0.0.0) at port 5000
-    .run() // This is important for Docker deployment — use 127.0.0.1 only for local dev
-    .await // Start the server's event loop and wait for incoming requests
+    .bind("0.0.0.0:5000")? // Bind to all interfaces on port 5000
+    .run()
+    .await
 }

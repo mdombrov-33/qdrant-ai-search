@@ -1,28 +1,39 @@
-use super::request::Metadata; // Import the Metadata struct from the request module
-use serde::{Deserialize, Serialize}; // Allows this struct to be built from JSON
+//! Response models for the re-ranking API.
+//!
+//! These structures define the shape of data we send back to FastAPI.
+//! They correspond to the JSON response our service produces.
 
-/// A single result item returned *after* the Rust service re-ranks it
-#[derive(Debug, Deserialize, Serialize)]
-pub struct ReRankedResult {
-    /// Unique identifier for the document chunk
-    pub id: String,
+use super::request::ResultMetadata;
+use serde::Serialize;
 
-    /// Text content of the result (e.g., a chunk of a document)
-    pub text: String,
-
-    /// Final adjusted relevance score after processing
-    pub score: f32,
-
-    /// Metadata about the document (file name, MIME type, etc.)
-    pub metadata: Metadata,
-}
-
-/// The full response body returned from the /re-rank endpoint
-#[derive(Debug, Deserialize, Serialize)]
+/// The main response structure for the /re-rank endpoint.
+///
+/// This represents the JSON we send back to FastAPI after processing.
+/// The `Serialize` trait allows automatic conversion from struct to JSON.
+#[derive(Debug, Serialize)]
 pub struct ReRankResponse {
-    /// List of top re-ranked results returned to FastAPI
+    /// Re-ranked and filtered results, limited to requested count
     pub results: Vec<ReRankedResult>,
 
-    /// Time in milliseconds it took to process the results
+    /// How long processing took in milliseconds
     pub processing_time_ms: u64,
+}
+
+/// A single re-ranked result.
+///
+/// This is similar to SearchResult but with an enhanced score
+/// calculated by our algorithms.
+#[derive(Debug, Serialize)]
+pub struct ReRankedResult {
+    /// Unique identifier (same as input)
+    pub id: String,
+
+    /// Text content (same as input)
+    pub text: String,
+
+    /// Enhanced score calculated by our algorithms
+    pub score: f64,
+
+    /// Metadata (same as input)
+    pub metadata: ResultMetadata,
 }

@@ -1,36 +1,34 @@
-use actix_web::{HttpResponse, ResponseError};
-use serde_json::json;
+//! Error types and handling for the application.
+//!
+//! This module defines custom error types that represent different failure modes in application.
+
 use std::fmt;
+
+/// Custom error types for the application.
+///
+/// This enum represents all the different ways our application can fail.
+/// Each variant contains relevant information about the specific error.
 
 #[derive(Debug)]
 pub enum AppError {
+    /// Input validation failed (corresponds to HTTP 400)
     InvalidInput(String),
-    InternalError(String),
 }
 
+/// Implement Display trait for user-friendly error messages.
+///
+/// This allows us to convert errors to strings for logging and responses.
+/// The Display trait is like toString() in other languages.
 impl fmt::Display for AppError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             AppError::InvalidInput(msg) => write!(f, "Invalid input: {msg}"),
-            AppError::InternalError(msg) => write!(f, "Internal error: {msg}"),
         }
     }
 }
 
+/// Implement Error trait to make this a proper Rust error type.
+///
+/// This trait is required for errors to work with Rust's error handling
+/// ecosystem (like the `?` operator and error propagation).
 impl std::error::Error for AppError {}
-
-// Convert AppError into proper HTTP responses for Actix
-impl ResponseError for AppError {
-    fn error_response(&self) -> HttpResponse {
-        match self {
-            AppError::InvalidInput(msg) => HttpResponse::BadRequest().json(json!({
-                "error": "InvalidInput",
-                "message": msg,
-            })),
-            AppError::InternalError(msg) => HttpResponse::InternalServerError().json(json!({
-                "error": "InternalError",
-                "message": msg,
-            })),
-        }
-    }
-}
