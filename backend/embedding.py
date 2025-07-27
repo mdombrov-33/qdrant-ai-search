@@ -11,23 +11,31 @@ if not OPENAI_API_KEY:
 OPENAI_EMBEDDING_URL = "https://api.openai.com/v1/embeddings"
 
 
-def chunk_text(text, max_words: int = 1000) -> list[str]:
+def chunk_text(text: str, max_words: int = 50, overlap: int = 10) -> list[str]:
     """
-    Splits the input text into chunks of a specified maximum number of words.
+    Splits text into overlapping chunks of max_words size with specified overlap.
 
     Args:
-        text (str): The input text to be chunked.
-        max_words (int): The maximum number of words per chunk. Default is 1000.
+        text (str): The input text to chunk.
+        max_words (int): Maximum words per chunk (default 50).
+        overlap (int): Number of words to overlap between chunks (default 10).
 
     Returns:
-        list[str]: A list of text chunks.
+        list[str]: List of text chunks with overlap.
     """
     words = text.split()
-    # Split the list of words into chunks of size max_words,
-    # then join each chunk back into a single string with spaces.
-    # The result is a list of strings, each string is a chunk of the original text.
-    # For example, if max_words=1000, it creates chunks of 1000 words each.
-    return [" ".join(words[i : i + max_words]) for i in range(0, len(words), max_words)]
+    if max_words <= overlap:
+        raise ValueError("max_words must be greater than overlap")
+
+    chunks = []
+    start = 0
+    while start < len(words):
+        end = start + max_words
+        chunk = words[start:end]
+        chunks.append(" ".join(chunk))
+        start += max_words - overlap  # Move start forward but keep overlap
+
+    return chunks
 
 
 def _extract_error_message(response: httpx.Response) -> str:
