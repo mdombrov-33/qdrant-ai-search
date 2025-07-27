@@ -65,6 +65,7 @@ async def search_documents(request: SearchRequest):
                 results=raw_results,
                 limit=request.limit,
                 idf_map=idf_map,
+                threshold=request.threshold,
             )
 
             ranked_results = ranked_response["results"]

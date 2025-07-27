@@ -52,11 +52,11 @@ impl DocumentReRanker {
     ///
     /// This is like a constructor in OOP languages. We initialize all our
     /// utility components here so they're ready to use.
-    pub fn new() -> Self {
+    pub fn new(req: &ReRankRequest) -> Self {
         Self {
             text_analyzer: TextAnalyzer::new(),
             score_calculator: ScoreCalculator::new(),
-            result_filter: ResultFilter::new(),
+            result_filter: ResultFilter::new(req.threshold),
             similarity_calculator: SimilarityCalculator::new(),
         }
     }
@@ -141,6 +141,7 @@ impl DocumentReRanker {
         // Convert to response format and apply limit
         let final_results: Vec<ReRankedResult> = deduplicated
             .into_iter()
+            .filter(|enhanced| enhanced.enhanced_score >= req.threshold) // Final threshold check
             .take(req.limit.min(50)) // Cap at 50 for performance
             .map(|enhanced| ReRankedResult {
                 id: enhanced.original.id,
@@ -184,18 +185,13 @@ impl DocumentReRanker {
     }
 }
 
-// === SINGLETON PATTERN FOR PERFORMANCE ===
-// We create one instance that gets reused across all requests.
-// This avoids recreating expensive data structures (like stop word sets)
-// on every request. In Python, this would be a module-level variable.
-use std::sync::OnceLock;
-static RERANKER: OnceLock<DocumentReRanker> = OnceLock::new();
-
 /// Public interface function that your HTTP handler will call.
 ///
-/// This function gets the singleton instance and delegates to it.
-/// It's like a factory function that hides the complexity of instance management.
+/// Creates a new DocumentReRanker instance for each request to ensure
+/// the correct threshold is used. The performance impact is minimal since
+/// the expensive operations (text analysis, scoring) happen during processing,
+/// not during initialization.
 pub async fn rerank_documents(req: ReRankRequest) -> Result<ReRankResponse, AppError> {
-    let reranker = RERANKER.get_or_init(DocumentReRanker::new);
+    let reranker = DocumentReRanker::new(&req);
     reranker.rerank_documents(req).await
 }

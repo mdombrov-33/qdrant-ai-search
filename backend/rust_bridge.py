@@ -16,6 +16,7 @@ async def re_rank_results(
     results: List[Dict[str, Any]],
     limit: int = 10,
     idf_map: Optional[dict[str, float]] = None,
+    threshold: float = 0.7,
     timeout: float = 5.0,
 ) -> Dict[str, Any]:
     """
@@ -59,6 +60,7 @@ async def re_rank_results(
         ],
         "limit": limit,
         "idf_map": idf_map or {},
+        "threshold": threshold,
     }
 
     try:

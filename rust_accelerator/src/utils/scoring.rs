@@ -23,11 +23,11 @@ pub struct ScoreWeights {
 impl Default for ScoreWeights {
     fn default() -> Self {
         Self {
-            text_quality: 0.8,        // Full weight - quality is crucial
-            keyword_matching: 0.25,   // 50% boost max - helps but don't overdo
-            length_optimization: 0.6, // Full weight - length matters a lot
-            position_decay: 0.05,     // Small weight - slight preference for earlier results
-            completeness: 0.1,        // Small boost - nice to have complete sentences
+            text_quality: 0.3,        // Reduced weight - be less punitive
+            keyword_matching: 0.4,    // Increased - reward keyword matches more
+            length_optimization: 0.2, // Reduced weight - length less important
+            position_decay: 0.02,     // Reduced - minimal position penalty
+            completeness: 0.05,       // Reduced - minimal completeness bonus
         }
     }
 }
@@ -65,35 +65,41 @@ impl ScoreCalculator {
         position: usize,
     ) -> f64 {
         // Start with the original Qdrant similarity score
-        let mut score = result.score;
+        let base_score = result.score;
 
-        // === ALGORITHM 1: TEXT QUALITY MULTIPLIER ===
-        // Penalize low-quality text, boost high-quality text
+        // === ALGORITHM 1: TEXT QUALITY ADJUSTMENT ===
+        // Apply as a smaller multiplier to avoid too much penalty
         let quality_factor = self.calculate_text_quality_factor(&result.text);
-        score *= quality_factor * self.weights.text_quality;
+        let quality_adjustment = (quality_factor - 1.0) * self.weights.text_quality;
 
         // === ALGORITHM 2: KEYWORD MATCHING BOOST ===
-        // Boost results that contain query keywords
+        // This should be additive to reward exact matches
         let keyword_boost = self.calculate_keyword_boost(&result.text, query_features);
-        score += keyword_boost * self.weights.keyword_matching;
 
         // === ALGORITHM 3: LENGTH OPTIMIZATION ===
-        // Apply sweet-spot scoring based on text length
+        // Apply as smaller adjustment, not harsh multiplier
         let length_factor = self.calculate_length_factor(result.text.len());
-        score *= length_factor * self.weights.length_optimization;
+        let length_adjustment = (length_factor - 1.0) * self.weights.length_optimization;
 
         // === ALGORITHM 4: POSITION DECAY ===
-        // Slight preference for results that were originally ranked higher
+        // Keep as small multiplicative penalty
         let position_factor = self.calculate_position_factor(position);
-        score *= 1.0 - (position_factor * self.weights.position_decay);
+        let position_penalty = position_factor * self.weights.position_decay;
 
         // === ALGORITHM 5: COMPLETENESS BONUS ===
         // Small bonus for complete sentences and well-formed text
         let completeness_bonus = self.calculate_completeness_bonus(&result.text);
-        score += completeness_bonus * self.weights.completeness;
 
-        // Ensure score stays in valid range [0.0, 1.0]
-        score.clamp(0.0, 2.0) // Allow scores up to 2.0, then clamp
+        // Combine all factors more conservatively
+        let mut final_score = base_score;
+        final_score += quality_adjustment; // Add/subtract quality
+        final_score += keyword_boost * self.weights.keyword_matching; // Add keyword boost
+        final_score += length_adjustment; // Add/subtract length
+        final_score *= 1.0 - position_penalty; // Small position penalty
+        final_score += completeness_bonus * self.weights.completeness; // Add completeness
+
+        // Ensure score stays in valid range but allow enhancement above 1.0
+        final_score.clamp(0.0, 2.0)
     }
 
     /// Assesses text quality and returns a multiplier.
@@ -109,26 +115,26 @@ impl ScoreCalculator {
 
         // 1. Length check - minimum 20 chars
         if text_len < 20 {
-            // Scale penalty linearly from 10-20 chars
-            return 0.3 + (text_len as f64 / 20.0 * 0.7);
+            // Scale penalty linearly from 10-20 chars - less punitive
+            return 0.7 + (text_len as f64 / 20.0 * 0.3);
         }
 
         // 2. Sentence structure analysis
         let ends_with_punctuation = text.trim().ends_with(['.', '!', '?']);
         let sentence_count = text.matches(['.', '!', '?']).count();
 
-        // 3. Quality scoring
+        // 3. Quality scoring - much less punitive
         match (ends_with_punctuation, sentence_count) {
             // Ideal case: Properly terminated with 1-3 sentences
-            (true, 1..=3) => 1.15, // Good quality - 15% boost
+            (true, 1..=3) => 1.1, // Good quality - 10% boost
 
-            // Good but could be better
-            (true, 0) => 0.9, // Has punctuation but no full sentences
-            (true, _) => 1.1, // Many sentences but properly terminated
+            // Good but could be better - less penalty
+            (true, 0) => 1.0,  // Neutral - has punctuation
+            (true, _) => 1.05, // Many sentences but properly terminated
 
-            // Problem cases
-            (false, 0) => 0.7, // No punctuation at all
-            (false, _) => 0.8, // Mid-sentence fragments
+            // Problem cases - much less punitive
+            (false, 0) => 0.95, // Very slight penalty
+            (false, _) => 0.98, // Tiny penalty for fragments
         }
     }
 
@@ -184,12 +190,12 @@ impl ScoreCalculator {
     /// - Very long: Often contains irrelevant information
     fn calculate_length_factor(&self, length: usize) -> f64 {
         match length {
-            0..=50 => 0.5,      // Too short - major penalty
+            0..=50 => 0.9,      // Short - small penalty instead of major
             51..=150 => 1.0,    // Short but complete - neutral
             151..=500 => 1.05,  // Sweet spot - small bonus
-            501..=1000 => 1.05, // Still good - tiny bonus
+            501..=1000 => 1.02, // Still good - tiny bonus
             1001..=2000 => 1.0, // Getting long - neutral
-            _ => 0.9,           // Too long - small penalty
+            _ => 0.98,          // Too long - very small penalty
         }
     }
 

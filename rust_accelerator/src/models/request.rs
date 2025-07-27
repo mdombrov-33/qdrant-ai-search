@@ -33,6 +33,8 @@ pub struct ReRankRequest {
     /// Optional inverse document frequency boost map
     #[serde(default)]
     pub idf_map: Option<HashMap<String, f64>>,
+
+    pub threshold: f64,
 }
 
 /// A single search result from Qdrant.

@@ -63,7 +63,8 @@ async fn test_rerank_valid_input() {
                 }
             }
         ],
-        "limit": 10
+        "limit": 10,
+        "threshold": 0.4
     });
 
     // Make request
@@ -96,7 +97,8 @@ async fn test_rerank_invalid_input() {
     let test_request = json!({
         "query": "",
         "results": [],
-        "limit": 10
+        "limit": 10,
+        "threshold": 0.5
     });
 
     let req = test::TestRequest::post()

@@ -23,11 +23,11 @@ pub struct ResultFilter {
 }
 
 impl ResultFilter {
-    pub fn new() -> Self {
+    pub fn new(min_similarity_score: f64) -> Self {
         Self {
-            min_text_length: 10,       // At least 10 characters
-            max_text_length: 5000,     // No more than 5000 characters
-            min_similarity_score: 0.1, // At least 10% similarity
+            min_text_length: 10,   // At least 10 characters
+            max_text_length: 5000, // No more than 5000 characters
+            min_similarity_score,
         }
     }
     /// Determines if a result should be kept for further processing.
