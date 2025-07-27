@@ -1,3 +1,5 @@
+use actix_web::{HttpResponse, ResponseError};
+use serde_json::json;
 use std::fmt;
 
 #[derive(Debug)]
@@ -16,3 +18,19 @@ impl fmt::Display for AppError {
 }
 
 impl std::error::Error for AppError {}
+
+// Convert AppError into proper HTTP responses for Actix
+impl ResponseError for AppError {
+    fn error_response(&self) -> HttpResponse {
+        match self {
+            AppError::InvalidInput(msg) => HttpResponse::BadRequest().json(json!({
+                "error": "InvalidInput",
+                "message": msg,
+            })),
+            AppError::InternalError(msg) => HttpResponse::InternalServerError().json(json!({
+                "error": "InternalError",
+                "message": msg,
+            })),
+        }
+    }
+}
