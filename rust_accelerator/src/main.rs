@@ -1,11 +1,13 @@
+pub mod models;
+
+// Declare the handlers module so Rust knows to look in `handlers/` folder
+mod handlers;
+
 // Import required modules from the actix-web crate
 // - App: to define routes
 // - HttpServer: to run the server
 // - web: contains helpers like route() and handler registration
 use actix_web::{App, HttpServer, web};
-
-// Declare the handlers module so Rust knows to look in `handlers/` folder
-mod handlers;
 
 // Import the specific handler function for health check
 use handlers::health::health_check;
