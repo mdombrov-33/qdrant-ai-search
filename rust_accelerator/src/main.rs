@@ -42,7 +42,8 @@ async fn main() -> std::io::Result<()> {
     info!("Starting Rust Accelerator Service");
 
     // Start HTTP server
-    HttpServer::new(|| {
+    // Wrap bind in match to catch errors and log them gracefully
+    let server = HttpServer::new(|| {
         App::new()
             // Add request logging middleware (like Morgan in Express)
             .wrap(Logger::default())
@@ -51,8 +52,13 @@ async fn main() -> std::io::Result<()> {
             .route("/re-rank", web::post().to(handlers::rerank::handle_rerank))
             // Set JSON payload size limit (default is 256KB, we increase it)
             .app_data(web::JsonConfig::default().limit(1024 * 1024)) // 1MB limit
-    })
-    .bind("0.0.0.0:5000")? // Bind to all interfaces on port 5000
-    .run()
-    .await
+    });
+
+    match server.bind("0.0.0.0:5000") {
+        Ok(server) => server.run().await,
+        Err(e) => {
+            eprintln!("Failed to bind server: {e}");
+            Err(e)
+        }
+    }
 }
