@@ -13,15 +13,10 @@ OPENAI_EMBEDDING_URL = "https://api.openai.com/v1/embeddings"
 
 def chunk_text(text: str, max_words: int = 50, overlap: int = 10) -> list[str]:
     """
-    Splits text into overlapping chunks of max_words size with specified overlap.
+    DEPRECATED: Use smart_chunk_text from utils.smart_chunker instead.
 
-    Args:
-        text (str): The input text to chunk.
-        max_words (int): Maximum words per chunk (default 50).
-        overlap (int): Number of words to overlap between chunks (default 10).
-
-    Returns:
-        list[str]: List of text chunks with overlap.
+    This function is kept for backward compatibility but should be replaced
+    with the semantic chunking approach for better search quality.
     """
     words = text.split()
     if max_words <= overlap:
