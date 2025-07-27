@@ -23,9 +23,9 @@ pub struct ScoreWeights {
 impl Default for ScoreWeights {
     fn default() -> Self {
         Self {
-            text_quality: 1.0,        // Full weight - quality is crucial
-            keyword_matching: 0.5,    // 50% boost max - helps but don't overdo
-            length_optimization: 1.0, // Full weight - length matters a lot
+            text_quality: 0.8,        // Full weight - quality is crucial
+            keyword_matching: 0.25,   // 50% boost max - helps but don't overdo
+            length_optimization: 0.6, // Full weight - length matters a lot
             position_decay: 0.05,     // Small weight - slight preference for earlier results
             completeness: 0.1,        // Small boost - nice to have complete sentences
         }
@@ -93,7 +93,7 @@ impl ScoreCalculator {
         score += completeness_bonus * self.weights.completeness;
 
         // Ensure score stays in valid range [0.0, 1.0]
-        score.clamp(0.0, 1.0)
+        score.clamp(0.0, 2.0) // Allow scores up to 2.0, then clamp
     }
 
     /// Assesses text quality and returns a multiplier.
@@ -120,7 +120,7 @@ impl ScoreCalculator {
         // 3. Quality scoring
         match (ends_with_punctuation, sentence_count) {
             // Ideal case: Properly terminated with 1-3 sentences
-            (true, 1..=3) => 1.3, // Good quality - 30% boost
+            (true, 1..=3) => 1.15, // Good quality - 15% boost
 
             // Good but could be better
             (true, 0) => 0.9, // Has punctuation but no full sentences
@@ -171,7 +171,7 @@ impl ScoreCalculator {
         }
 
         // Cap the total boost to prevent over-domination
-        total_boost.min(0.5) // Maximum 50% boost
+        total_boost.min(0.25) // Maximum 25% boost
     }
 
     /// Calculates length optimization factor.
@@ -186,7 +186,7 @@ impl ScoreCalculator {
         match length {
             0..=50 => 0.5,      // Too short - major penalty
             51..=150 => 1.0,    // Short but complete - neutral
-            151..=500 => 1.1,   // Sweet spot - small bonus
+            151..=500 => 1.05,  // Sweet spot - small bonus
             501..=1000 => 1.05, // Still good - tiny bonus
             1001..=2000 => 1.0, // Getting long - neutral
             _ => 0.9,           // Too long - small penalty
