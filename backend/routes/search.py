@@ -63,27 +63,27 @@ async def search_documents(request: SearchRequest):
             logger.error(f"Re-ranking failed: {e}")
             ranked_results = raw_results[: request.limit]
 
-            search_results = []
-            for result in ranked_results:
-                search_results.append(
-                    SearchResult(
-                        id=str(result["id"]),
-                        text=result["payload"]["text"],
-                        score=result["score"],
-                        metadata={
-                            "file_name": result["payload"].get("file_name"),
-                            "content_type": result["payload"].get("content_type"),
-                        },
-                    )
+        search_results = []
+        for result in ranked_results:
+            search_results.append(
+                SearchResult(
+                    id=str(result["id"]),
+                    text=result["payload"]["text"],
+                    score=result["score"],
+                    metadata={
+                        "file_name": result["payload"].get("file_name"),
+                        "content_type": result["payload"].get("content_type"),
+                    },
                 )
-
-            end_time = time.time()
-
-            return SearchResponse(
-                results=search_results,
-                query_time_ms=int(end_time - start_time) * 1000,
-                total_found=len(raw_results),
             )
+
+        end_time = time.time()
+
+        return SearchResponse(
+            results=search_results,
+            query_time_ms=int((end_time - start_time) * 1000),
+            total_found=len(raw_results),
+        )
 
     except Exception as e:
         logger.error(f"Search failed: {e}")
