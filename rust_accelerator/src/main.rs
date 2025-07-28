@@ -5,7 +5,6 @@
 //! or the app setup in Express.js.
 
 use actix_web::{App, HttpServer, middleware::Logger, web};
-use log::info;
 
 mod error;
 mod handlers;
@@ -39,7 +38,8 @@ async fn main() -> std::io::Result<()> {
     // Set RUST_LOG=info for normal logging, RUST_LOG=debug for verbose logging
     env_logger::init();
 
-    info!("Starting Rust Accelerator Service");
+    println!(" Rust Accelerator v2.4 - Balanced Domain Filtering");
+    println!(" Build ID: domain-filter-balanced-v1");
 
     // Start HTTP server
     // Wrap bind in match to catch errors and log them gracefully

@@ -341,7 +341,7 @@ qdrant-ai-search/
 ├── 🐍 backend/                 # FastAPI application
 │   ├── main.py                 # API routes & startup
 │   ├── file_loader.py          # Document processing
-|   ├── routes/                 # Routes (health, upload, config, summarize) 
+|   ├── routes/                 # Routes (health, upload, config, summarize)
 │   ├── embedding.py            # OpenAI integration
 │   ├── qdrant_service.py       # Vector operations
 │   ├── rust_bridge.py          # Rust service client
@@ -352,10 +352,10 @@ qdrant-ai-search/
 ├── 🦀 rust_accelerator/        # High-performance scoring service
 │   ├── src/main.rs             # Actix-web server
 │   ├── src/handlers/           # API endpoints
-|   ├── src/models/             # Data structs 
+|   ├── src/models/             # Data structs
 │   ├── src/services/           # Business logic
 |   ├── src/utils/              # Utility functions (e.g., text cleaning, preprocessing helpers)
-|   ├── src/error.rs            # Custom error types and conversions   
+|   ├── src/error.rs            # Custom error types and conversions
 │   └── tests/                  # Rust tests
 │
 ├── ☸️ helm/                    # Kubernetes deployment
@@ -474,7 +474,38 @@ make deploy-all
 
 ---
 
-## 📈 Observability Stack
+## � Troubleshooting
+
+### Docker/Rust Cache Corruption Issue
+
+**Problem**: Rust service exits silently with code 0 after Docker Compose build, usually after modifying Rust code. This happens due to Docker layer caching conflicts with Rust's incremental compilation cache.
+
+**Symptoms**:
+
+```bash
+docker-compose up
+# rust_accelerator-1 exited with code 0
+```
+
+**Solution**: Force Docker cache invalidation by modifying a source file (typically `main.rs`):
+
+```rust
+// In rust_accelerator/src/main.rs, modify any log message or add new logging:
+info!("Starting Rust Accelerator Service v2.1 with Domain Filtering");
+info!("Build ID: your-unique-build-id-here");
+```
+
+**Why This Happens**: Docker's layer caching system conflicts with Rust's incremental compilation. When Rust code changes, Docker may reuse cached layers that contain stale Rust build artifacts, causing the service to fail silently on startup.
+
+**Prevention**:
+
+- Always modify at least one source file when encountering this issue
+- Consider using `docker-compose build --no-cache` for clean rebuilds (slower but more reliable)
+- The Makefile commands handle this automatically for Kubernetes deployments
+
+---
+
+## �📈 Observability Stack
 
 ### Monitoring Architecture
 

@@ -90,7 +90,7 @@ impl DocumentReRanker {
             .text_analyzer
             .extract_query_features(&req.query, req.idf_map.clone());
 
-        // === STEP 3: PARALLEL RESULT PROCESSING ===
+        // === STEP 3: PARALLEL RESULT PROCESSING WITH DOMAIN FILTERING ===
         // Process all results in parallel, filtering and enhancing scores
         // The `into_iter()` takes ownership, `enumerate()` adds position index
         let mut enhanced_results: Vec<EnhancedResult> = req
@@ -98,8 +98,11 @@ impl DocumentReRanker {
             .into_iter()
             .enumerate()
             .filter_map(|(position, result)| {
-                // Early filtering - skip obviously bad results
-                if !self.result_filter.should_keep(&result) {
+                // Use domain-aware filtering instead of simple filtering
+                if !self
+                    .result_filter
+                    .should_keep_with_query(&result, &req.query)
+                {
                     return None; // `None` means "skip this item"
                 }
 
