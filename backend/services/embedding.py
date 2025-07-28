@@ -1,8 +1,8 @@
 import asyncio
 import httpx
-from fastapi import HTTPException
 import random
 from config import settings
+from exceptions import EmbeddingGenerationError, OpenAIServiceError
 
 OPENAI_EMBEDDING_URL = "https://api.openai.com/v1/embeddings"
 
@@ -89,9 +89,8 @@ async def get_embedding(text: str, max_retries: int = 3) -> list[float]:
 
             # Handle other HTTP errors - don't retry
             error_message = _extract_error_message(e.response)
-            raise HTTPException(
-                status_code=500,
-                detail=f"OpenAI API error: {e.response.status_code} - {error_message}",
+            raise OpenAIServiceError(
+                f"OpenAI API error: {e.response.status_code} - {error_message}"
             )
 
         except (httpx.TimeoutException, httpx.RequestError) as e:
@@ -103,24 +102,17 @@ async def get_embedding(text: str, max_retries: int = 3) -> list[float]:
 
         except Exception as e:
             # Unexpected errors - don't retry these
-            raise HTTPException(
-                status_code=500, detail=f"Embedding generation failed: {str(e)}"
-            )
+            raise EmbeddingGenerationError(f"Embedding generation failed: {str(e)}")
 
     # If we get here, all retries failed
     if isinstance(last_exception, httpx.TimeoutException):
-        raise HTTPException(
-            status_code=500, detail="OpenAI API timeout - please try again"
-        )
+        raise OpenAIServiceError("OpenAI API timeout - please try again")
     elif isinstance(last_exception, httpx.RequestError):
-        raise HTTPException(
-            status_code=500,
-            detail=f"Network error connecting to OpenAI API: {str(last_exception)}",
+        raise OpenAIServiceError(
+            f"Network error connecting to OpenAI API: {str(last_exception)}"
         )
     else:
-        raise HTTPException(
-            status_code=500, detail="Max retries exceeded for embedding generation"
-        )
+        raise EmbeddingGenerationError("Max retries exceeded for embedding generation")
 
 
 async def embed_chunks(chunks: list[str]) -> list[dict]:

@@ -5,6 +5,7 @@ from utils.logging_config import logger
 from qdrant_client import QdrantClient
 from qdrant_client.http.models import Distance, VectorParams, PointStruct
 from qdrant_client.http.exceptions import UnexpectedResponse
+from exceptions import QdrantServiceError, VectorSearchError
 
 QDRANT_URL = os.getenv("QDRANT_URL", "http://localhost:6333")
 
@@ -75,7 +76,7 @@ def insert_vectors_batch(
             point_id = str(uuid.uuid4())
 
         if not point_id:
-            raise ValueError(
+            raise QdrantServiceError(
                 "Each item must have an 'id' or enable 'generate_ids=True'."
             )
 
@@ -140,4 +141,4 @@ def search_vectors(
 
     except Exception as e:
         logger.error(f"Error during search: {e}")
-        raise
+        raise VectorSearchError(f"Vector search failed: {str(e)}")

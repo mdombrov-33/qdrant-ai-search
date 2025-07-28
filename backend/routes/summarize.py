@@ -1,8 +1,13 @@
 from fastapi import APIRouter, HTTPException
 from models.summarize import SummarizeRequest, SummarizeResponse
-from openai_chat_service import get_chat_completion, create_summary_messages
+from services.openai_chat_service import (
+    get_chat_completion,
+    create_summary_messages,
+)
 from config import settings
 from utils.logging_config import logger
+from utils.exception_handler import handle_custom_exception
+from exceptions import QdrantSearchError
 import time
 
 router = APIRouter()
@@ -10,20 +15,22 @@ router = APIRouter()
 
 @router.post("/summarize", response_model=SummarizeResponse)
 async def summarize_search_results(request: SummarizeRequest):
-    if not settings.OPENAI_API_KEY:
-        raise HTTPException(status_code=500, detail="OpenAI API key is not configured")
-
-    if not request.query.strip():
-        raise HTTPException(status_code=400, detail="Query cannot be empty")
-
-    if not request.search_results:
-        raise HTTPException(
-            status_code=400, detail="No search results provided for summarization"
-        )
-
-    start_time = time.time()
-
     try:
+        if not settings.OPENAI_API_KEY:
+            raise HTTPException(
+                status_code=500, detail="OpenAI API key is not configured"
+            )
+
+        if not request.query.strip():
+            raise HTTPException(status_code=400, detail="Query cannot be empty")
+
+        if not request.search_results:
+            raise HTTPException(
+                status_code=400, detail="No search results provided for summarization"
+            )
+
+        start_time = time.time()
+
         # Extract text chunks from SearchResult objects
         chunks = [result.text for result in request.search_results]
 
@@ -50,6 +57,10 @@ async def summarize_search_results(request: SummarizeRequest):
             chunks_processed=len(chunks),
         )
 
+    except QdrantSearchError as e:
+        raise handle_custom_exception(e)
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Summarization failed: {e}")
         raise HTTPException(

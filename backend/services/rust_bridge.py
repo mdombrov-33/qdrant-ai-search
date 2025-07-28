@@ -3,12 +3,7 @@ from typing import List, Dict, Any
 from config import settings
 from utils.logging_config import logger
 from typing import Optional
-
-
-class RustServiceError(Exception):
-    """Custom exception for Rust service errors."""
-
-    pass
+from exceptions import RustServiceError
 
 
 async def re_rank_results(

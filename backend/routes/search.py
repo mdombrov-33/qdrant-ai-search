@@ -1,11 +1,13 @@
 from fastapi import APIRouter, HTTPException
 from utils.idf import compute_idf
 from models.search import SearchRequest, SearchResult, SearchResponse
-from embedding import get_embedding
-from qdrant_service import search_vectors, client
-from rust_bridge import re_rank_results
+from services.embedding import get_embedding
+from services.qdrant_service import search_vectors, client
+from services.rust_bridge import re_rank_results
 from config import settings
 from utils.logging_config import logger
+from utils.exception_handler import handle_custom_exception
+from exceptions import QdrantSearchError
 import time
 
 router = APIRouter()
@@ -13,15 +15,15 @@ router = APIRouter()
 
 @router.post("/search", response_model=SearchResponse)
 async def search_documents(request: SearchRequest):
-    if not settings.QDRANT_URL:
-        raise HTTPException(status_code=500, detail="Qdrant URL is not configured")
-
-    if not request.query.strip():
-        raise HTTPException(status_code=400, detail="Query cannot be empty")
-
-    start_time = time.time()
-
     try:
+        if not settings.QDRANT_URL:
+            raise HTTPException(status_code=500, detail="Qdrant URL is not configured")
+
+        if not request.query.strip():
+            raise HTTPException(status_code=400, detail="Query cannot be empty")
+
+        start_time = time.time()
+
         query_embedding = await get_embedding(request.query)
 
         raw_results = search_vectors(
@@ -83,6 +85,10 @@ async def search_documents(request: SearchRequest):
             total_found=len(raw_results),
         )
 
+    except QdrantSearchError as e:
+        raise handle_custom_exception(e)
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Search failed: {e}")
         raise HTTPException(

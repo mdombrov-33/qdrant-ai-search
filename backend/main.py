@@ -1,15 +1,18 @@
 from fastapi import FastAPI
 from routes import health, config_routes, upload, search, summarize
-from qdrant_service import create_collection, client
+from services.qdrant_service import create_collection, client
 from contextlib import asynccontextmanager
 from config import settings
 from utils.logging_config import logger
+from exceptions import QdrantServiceError
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     try:
         create_collection(client, settings.QDRANT_COLLECTION_NAME, vector_size=1536)
+    except QdrantServiceError as e:
+        logger.warning(f"Failed to create collection on startup: {e}")
     except Exception as e:
         logger.warning(f"Failed to create collection on startup: {e}")
     yield

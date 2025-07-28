@@ -1,10 +1,10 @@
 import asyncio
 import httpx
-from fastapi import HTTPException
 import random
 from typing import Dict, List
 from utils.logging_config import logger
 from config import settings
+from exceptions import OpenAIServiceError
 
 OPENAI_CHAT_URL = "https://api.openai.com/v1/chat/completions"
 
@@ -86,9 +86,8 @@ async def get_chat_completion(
 
             # Handle other HTTP errors - don't retry
             error_message = _extract_error_message(e.response)
-            raise HTTPException(
-                status_code=500,
-                detail=f"OpenAI API error: {e.response.status_code} - {error_message}",
+            raise OpenAIServiceError(
+                f"OpenAI API error: {e.response.status_code} - {error_message}"
             )
 
         except (httpx.TimeoutException, httpx.RequestError) as e:
@@ -101,24 +100,17 @@ async def get_chat_completion(
 
         except Exception as e:
             # Unexpected errors - don't retry these
-            raise HTTPException(
-                status_code=500, detail=f"Chat completion failed: {str(e)}"
-            )
+            raise OpenAIServiceError(f"Chat completion failed: {str(e)}")
 
     # If we get here, all retries failed
     if isinstance(last_exception, httpx.TimeoutException):
-        raise HTTPException(
-            status_code=500, detail="OpenAI API timeout - please try again"
-        )
+        raise OpenAIServiceError("OpenAI API timeout - please try again")
     elif isinstance(last_exception, httpx.RequestError):
-        raise HTTPException(
-            status_code=500,
-            detail=f"Network error connecting to OpenAI API: {str(last_exception)}",
+        raise OpenAIServiceError(
+            f"Network error connecting to OpenAI API: {str(last_exception)}"
         )
     else:
-        raise HTTPException(
-            status_code=500, detail="Max retries exceeded for chat completion"
-        )
+        raise OpenAIServiceError("Max retries exceeded for chat completion")
 
 
 def create_summary_messages(
