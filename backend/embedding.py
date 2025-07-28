@@ -1,12 +1,8 @@
 import asyncio
-import os
 import httpx
 from fastapi import HTTPException
 import random
-
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-if not OPENAI_API_KEY:
-    raise ValueError("OPENAI_API_KEY environment variable is not set")
+from config import settings
 
 OPENAI_EMBEDDING_URL = "https://api.openai.com/v1/embeddings"
 
@@ -47,7 +43,7 @@ def _extract_error_message(response: httpx.Response) -> str:
 async def _make_embedding_request(text: str) -> list[float]:
     """Make a single embedding request to OpenAI API."""
     headers = {
-        "Authorization": f"Bearer {OPENAI_API_KEY}",
+        "Authorization": f"Bearer {settings.OPENAI_API_KEY}",
         "Content-Type": "application/json",
     }
 
