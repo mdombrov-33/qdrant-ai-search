@@ -422,16 +422,21 @@ Content-Type: application/json
 qdrant-ai-search/
 ├── 🐍 backend/                 # FastAPI application
 │   ├── main.py                 # API routes & startup
-│   ├── file_loader.py          # Document processing
-|   ├── routes/                 # Routes (health, upload, config, summarize)
-│   ├── embedding.py            # OpenAI integration
-│   ├── qdrant_service.py       # Vector operations
-│   ├── rust_bridge.py          # Rust service client
-|   ├── utils                   # Utility functions (e.g., text cleaning, preprocessing helpers)
-|     └── text_cleaner.py       # Text cleaning functions
+│   ├── config.py               # Configuration settings
+│   ├── Dockerfile              # Container build configuration
+│   ├── pyproject.toml          # Python dependencies & project metadata
+│   ├── poetry.lock             # Locked dependency versions
+│   ├── routes/                 # API routes (health, upload, search, summarize, config)
+│   ├── services/               # Core business logic services
+│   ├── models/                 # Data models and schemas
+│   ├── exceptions/             # Custom exception classes
+│   ├── utils/                  # Utility functions (file processing, text cleaning, etc.)
 │   └── tests/                  # Comprehensive tests
 │
 ├── 🦀 rust_accelerator/        # High-performance scoring service
+│   ├── Cargo.toml              # Rust project configuration & dependencies
+│   ├── Cargo.lock              # Locked dependency versions
+│   ├── Dockerfile              # Container build configuration
 │   ├── src/main.rs             # Actix-web server
 │   ├── src/handlers/           # API endpoints
 |   ├── src/models/             # Data structs
