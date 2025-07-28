@@ -7,26 +7,24 @@ from config import settings
 OPENAI_EMBEDDING_URL = "https://api.openai.com/v1/embeddings"
 
 
-def chunk_text(text: str, max_words: int = 50, overlap: int = 10) -> list[str]:
-    """
-    DEPRECATED: Use smart_chunk_text from utils.smart_chunker instead.
+# def chunk_text(text: str, max_words: int = 50, overlap: int = 10) -> list[str]:
+#     """
+#     DEPRECATED: Use smart_chunk_text from utils.smart_chunker instead.
+#     Kept just as a reference.
+#     """
+#     words = text.split()
+#     if max_words <= overlap:
+#         raise ValueError("max_words must be greater than overlap")
 
-    This function is kept for backward compatibility but should be replaced
-    with the semantic chunking approach for better search quality.
-    """
-    words = text.split()
-    if max_words <= overlap:
-        raise ValueError("max_words must be greater than overlap")
+#     chunks = []
+#     start = 0
+#     while start < len(words):
+#         end = start + max_words
+#         chunk = words[start:end]
+#         chunks.append(" ".join(chunk))
+#         start += max_words - overlap  # Move start forward but keep overlap
 
-    chunks = []
-    start = 0
-    while start < len(words):
-        end = start + max_words
-        chunk = words[start:end]
-        chunks.append(" ".join(chunk))
-        start += max_words - overlap  # Move start forward but keep overlap
-
-    return chunks
+#     return chunks
 
 
 def _extract_error_message(response: httpx.Response) -> str:
