@@ -184,16 +184,16 @@ make deploy-all                 # Deploy all services to Kubernetes
 docker-compose -f docker-compose.dev.yml up --build
 
 # Upload a document
-curl -X POST "http://localhost:8000/upload" \
+curl -X POST "http://localhost:8000/api/upload" \
   -F "file=@your_document.pdf"
 
 # Search with natural language
-curl -X POST "http://localhost:8000/search" \
+curl -X POST "http://localhost:8000/api/search" \
   -H "Content-Type: application/json" \
   -d '{"query": "machine learning algorithms", "limit": 5, "threshold": 0.8}'
 
 # Get AI summary
-curl -X POST \
+curl -X POST "http://localhost:8000/api/summarize" \
   -H "Content-Type: application/json" \
   -d '{
     "query": "What are the main machine learning algorithms?",
@@ -296,25 +296,68 @@ The author expresses concern about existential AI risk, highlighting Bostrom's w
 
 ## 📡 API Reference
 
+### 🏥 Health Check
+
+```http
+GET /health
+```
+
+**Response:**
+
+```json
+{
+  "status": "ok"
+}
+```
+
+### ⚙️ Configuration Status
+
+```http
+GET /config
+```
+
+**Response:**
+
+```json
+{
+  "openai_api_key_set": true,
+  "qdrant_url": "http://localhost:6333",
+  "rust_service_url": "http://localhost:5000"
+}
+```
+
 ### 🔼 Upload Document
 
 ```http
-POST /upload
+POST /api/upload
 Content-Type: multipart/form-data
 
 file: <PDF|DOCX|TXT file>
 ```
 
+**Response:**
+
+```json
+{
+  "filename": "document.pdf",
+  "content_type": "application/pdf",
+  "size": 1024576,
+  "chunks_count": 45,
+  "message": "File processed and embedded successfully."
+}
+```
+
 ### 🔍 Semantic Search
 
 ```http
-POST /search
+POST /api/search
 Content-Type: application/json
 
 {
   "query": "What are the benefits of renewable energy?",
   "limit": 10,
-  "threshold": 0.7
+  "threshold": 0.7,
+  "idf_map": {}
 }
 ```
 
@@ -328,25 +371,46 @@ Content-Type: application/json
       "text": "Solar and wind power offer significant environmental benefits...",
       "score": 0.94,
       "metadata": {
-        "filename": "energy_report.pdf",
-        "page": 12
+        "file_name": "energy_report.pdf",
+        "content_type": "application/pdf",
+        "chunk_index": 12,
+        "word_count": 245,
+        "chunk_type": "heading_section"
       }
     }
   ],
-  "query_time_ms": 45
+  "query_time_ms": 45,
+  "total_found": 23
 }
 ```
 
 ### 📝 AI Summarization
 
 ```http
-POST /summarize
+POST /api/summarize
 Content-Type: application/json
 
 {
-  "text": "Long text to summarize...",
-  "max_tokens": 150,
-  "style": "concise"
+  "query": "What are the main machine learning algorithms?",
+  "search_results": [
+    {
+      "id": "uuid-1",
+      "text": "Neural networks are a class of machine learning algorithms...",
+      "score": 0.95,
+      "metadata": {}
+    }
+  ],
+  "style": "comprehensive"
+}
+```
+
+**Response:**
+
+```json
+{
+  "summary": "Based on the provided documents, the main machine learning algorithms include...",
+  "query_time_ms": 1250,
+  "chunks_processed": 2
 }
 ```
 
