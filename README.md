@@ -23,7 +23,7 @@ This system demonstrates enterprise-grade microservices architecture with cuttin
 ### **Core Technical Stack**
 
 - **Vector Database**: Qdrant for high-performance similarity search
-- **AI Integration**: OpenAI with OpenAI/Cohere embeddings and LLM completions
+- **AI Integration**: OpenAI with OpenAI embeddings and LLM completions
 - **Polyglot Architecture**: FastAPI backend orchestrating a Rust microservice
 - **Production Infrastructure**: Kubernetes with Helm charts, full observability stack
 - **Automated Operations**: GitHub Actions CI/CD with container registry integration
@@ -181,7 +181,7 @@ make format-all lint-all        # Format and lint all code
 make deploy-all                 # Deploy all services to Kubernetes
 
 # Option 2: Docker Compose for local testing
-docker-compose up -d
+docker-compose -f docker-compose.dev.yml up --build
 
 # Upload a document
 curl -X POST "http://localhost:8000/upload" \
@@ -190,12 +190,30 @@ curl -X POST "http://localhost:8000/upload" \
 # Search with natural language
 curl -X POST "http://localhost:8000/search" \
   -H "Content-Type: application/json" \
-  -d '{"query": "machine learning algorithms", "limit": 5}'
+  -d '{"query": "machine learning algorithms", "limit": 5, "threshold": 0.8}'
 
 # Get AI summary
-curl -X POST "http://localhost:8000/summarize" \
+curl -X POST \
   -H "Content-Type: application/json" \
-  -d '{"text": "Your text to summarize..."}'
+  -d '{
+    "query": "What are the main machine learning algorithms?",
+    "search_results": [
+      {
+        "id": "uuid-1",
+        "text": "Neural networks are a class of machine learning algorithms...",
+        "score": 0.95,
+        "metadata": {}
+      },
+      {
+        "id": "uuid-2",
+        "text": "Decision trees provide interpretable classification...",
+        "score": 0.88,
+        "metadata": {}
+      }
+    ],
+    "style": "comprehensive"
+  }' \
+  http://localhost:8000/api/summarize
 ```
 
 Visit `http://localhost:8000/docs` for interactive API documentation.
