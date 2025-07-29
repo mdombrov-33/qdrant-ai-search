@@ -4,13 +4,36 @@
 //! and starts the application. It's like the main() function in other languages
 //! or the app setup in Express.js.
 
-use actix_web::{App, HttpServer, middleware::Logger, web};
+use actix_web::{App, HttpResponse, HttpServer, Result, middleware::Logger, web};
+use prometheus::{Counter, Encoder, TextEncoder, register_counter};
+use std::sync::OnceLock;
 
 mod error;
 mod handlers;
 mod models;
 mod services;
 mod utils;
+
+// Global metrics - this will count total requests to /re-rank
+static REQUEST_COUNTER: OnceLock<Counter> = OnceLock::new();
+
+fn get_request_counter() -> &'static Counter {
+    REQUEST_COUNTER.get_or_init(|| {
+        register_counter!("rerank_requests_total", "Total number of re-rank requests")
+            .expect("Failed to create counter")
+    })
+}
+
+async fn metrics_handler() -> Result<HttpResponse> {
+    let encoder = TextEncoder::new();
+    let metric_families = prometheus::gather();
+    let mut buffer = Vec::new();
+    encoder.encode(&metric_families, &mut buffer).unwrap();
+
+    Ok(HttpResponse::Ok()
+        .content_type("text/plain; version=0.0.4; charset=utf-8")
+        .body(buffer))
+}
 
 /// Main function - entry point of the application.
 ///
@@ -50,6 +73,7 @@ async fn main() -> std::io::Result<()> {
             // Register routes
             .route("/health", web::get().to(handlers::health::health_check))
             .route("/re-rank", web::post().to(handlers::rerank::handle_rerank))
+            .route("/metrics", web::get().to(metrics_handler))
             // Set JSON payload size limit (default is 256KB, we increase it)
             .app_data(web::JsonConfig::default().limit(1024 * 1024)) // 1MB limit
     });

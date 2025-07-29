@@ -32,6 +32,9 @@ use log::{error, info};
 /// });
 /// ```
 pub async fn handle_rerank(req: web::Json<ReRankRequest>) -> Result<HttpResponse> {
+    // Increment the request counter for Prometheus metrics
+    crate::get_request_counter().inc();
+
     // Log the incoming request for debugging/monitoring
     info!(
         "Processing re-rank request with {} results",
