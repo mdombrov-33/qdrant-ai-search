@@ -26,5 +26,20 @@ jobs:
           docker build -t ghcr.io/${{ github.repository }}/rust-accelerator:${{ github.sha }} ./rust_accelerator  
           docker push ghcr.io/${{ github.repository }}/rust-accelerator:${{ github.sha }}
       
-      # Actual K8s deployment would need cluster access
-      # For now, this shows the CI/CD pattern
+      - name: Deploy to Kubernetes
+        if: ${{ secrets.KUBE_CONFIG != '' }}
+        run: |
+          # Setup kubectl
+          mkdir -p ~/.kube
+          echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > ~/.kube/config
+          
+          # Update image tags in Helm values
+          helm upgrade --install qdrant-backend ./helm/backend \
+            --set image.tag=${{ github.sha }} \
+            --set image.repository=ghcr.io/${{ github.repository }}/backend \
+            --namespace qdrant-ai --create-namespace
+            
+          helm upgrade --install qdrant-rust ./helm/rust-accelerator \
+            --set image.tag=${{ github.sha }} \
+            --set image.repository=ghcr.io/${{ github.repository }}/rust-accelerator \
+            --namespace qdrant-ai --create-namespace

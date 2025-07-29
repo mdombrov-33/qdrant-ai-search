@@ -12,7 +12,7 @@ jobs:
       - name: Install Poetry
         run: pip install poetry
       - name: Install dependencies
-        run: cd backend && poetry install
+        run: cd backend && poetry install --no-root
       - name: Run tests
         run: cd backend && poetry run pytest
       - name: Lint
