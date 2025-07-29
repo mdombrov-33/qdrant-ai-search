@@ -193,6 +193,18 @@ deploy-prometheus:
 	@echo "✅ Prometheus deployed to Kubernetes"
 	@echo "💡 Access via: kubectl port-forward -n $(NAMESPACE) service/prometheus 9090:9090"
 
+deploy-grafana:
+	@echo "📈 Deploying Grafana dashboard via Helm..."
+	helm upgrade --install grafana ./helm/grafana -n $(NAMESPACE)
+	@echo "✅ Grafana deployed to Kubernetes"
+	@echo "💡 Access via: kubectl port-forward -n $(NAMESPACE) service/grafana 3000:3000"
+	@echo "💡 Login: admin/admin"
+
+deploy-monitoring: deploy-prometheus deploy-grafana
+	@echo "🎯 Complete monitoring stack deployed!"
+	@echo "📊 Prometheus: kubectl port-forward -n $(NAMESPACE) service/prometheus 9090:9090"
+	@echo "📈 Grafana: kubectl port-forward -n $(NAMESPACE) service/grafana 3000:3000"
+
 # ===============================================================================
 # 🐳 Docker Compose Support
 # ===============================================================================
@@ -226,12 +238,16 @@ restart-prometheus:
 	@echo "🔄 Restarting Prometheus deployment..."
 	kubectl rollout restart deployment/prometheus -n $(NAMESPACE)
 
+restart-grafana:
+	@echo "🔄 Restarting Grafana deployment..."
+	kubectl rollout restart deployment/grafana -n $(NAMESPACE)
+
 # ===============================================================================
 # 🧪 Debug & Monitoring Utilities
 # ===============================================================================
 
-deploy-all: deploy-backend deploy-rust deploy-qdrant deploy-prometheus
-	@echo "🎉 All services (including monitoring) deployed to Kubernetes!"
+deploy-all: deploy-backend deploy-rust deploy-qdrant deploy-monitoring
+	@echo "🎉 All services (including monitoring stack) deployed to Kubernetes!"
 
 status:
 	@echo "📊 Kubernetes pod status:"
@@ -263,12 +279,14 @@ help:
 	@echo ""
 	@echo "☸️ Kubernetes Deployment:"
 	@echo "  make deploy-all                             # Deploy everything (including monitoring)"
-	@echo "  make deploy-prometheus                      # Deploy Prometheus monitoring"
+	@echo "  make deploy-monitoring                      # Deploy Prometheus + Grafana"
+	@echo "  make deploy-prometheus                      # Deploy Prometheus only"
+	@echo "  make deploy-grafana                         # Deploy Grafana only"
 	@echo "  make status                                 # Check pod status"
 	@echo "  make logs SERVICE=backend                   # View logs"
-	@echo "  make port SERVICE=prometheus PORT=9090      # Access Prometheus UI"
+	@echo "  make port SERVICE=grafana PORT=3000         # Access Grafana dashboard"
 
 .PHONY: format-python lint-python format-rust lint-rust format-all lint-all \
         build-backend build-rust build-backend-for-compose build-rust-for-compose \
-        deploy-backend deploy-rust deploy-qdrant deploy-prometheus restart-backend restart-rust restart-qdrant restart-prometheus \
+        deploy-backend deploy-rust deploy-qdrant deploy-prometheus deploy-grafana deploy-monitoring restart-backend restart-rust restart-qdrant restart-prometheus restart-grafana \
         deploy-all status logs port bump-backend-version bump-rust-version sync-compose-env help

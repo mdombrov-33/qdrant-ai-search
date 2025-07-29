@@ -1,0 +1,195 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "Qdrant AI Search Platform Metrics",
+    "description": "Monitoring dashboard for FastAPI backend and Rust accelerator services",
+    "tags": ["qdrant", "ai", "search", "monitoring"],
+    "timezone": "browser",
+    "refresh": "30s",
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "panels": [
+      {
+        "id": 1,
+        "title": "API Request Rate (Backend)",
+        "description": "Requests per second to FastAPI backend",
+        "type": "stat",
+        "gridPos": {
+          "x": 0,
+          "y": 0,
+          "w": 6,
+          "h": 4
+        },
+        "targets": [
+          {
+            "expr": "rate(http_requests_total{job=\"backend\"}[5m])",
+            "legendFormat": "{{method}} {{handler}}",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "reqps",
+            "color": {
+              "mode": "palette-classic"
+            }
+          }
+        }
+      },
+      {
+        "id": 2,
+        "title": "Rust Re-rank Requests",
+        "description": "Total re-rank requests processed",
+        "type": "stat",
+        "gridPos": {
+          "x": 6,
+          "y": 0,
+          "w": 6,
+          "h": 4
+        },
+        "targets": [
+          {
+            "expr": "rerank_requests_total",
+            "legendFormat": "Total Re-ranks",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short",
+            "color": {
+              "mode": "thresholds",
+              "fixedColor": "green"
+            }
+          }
+        }
+      },
+      {
+        "id": 3,
+        "title": "Backend Response Times",
+        "description": "API response time percentiles",
+        "type": "timeseries",
+        "gridPos": {
+          "x": 0,
+          "y": 4,
+          "w": 12,
+          "h": 6
+        },
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.50, rate(http_request_duration_seconds_bucket{job=\"backend\"}[5m]))",
+            "legendFormat": "50th percentile",
+            "refId": "A"
+          },
+          {
+            "expr": "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{job=\"backend\"}[5m]))",
+            "legendFormat": "95th percentile",
+            "refId": "B"
+          },
+          {
+            "expr": "histogram_quantile(0.99, rate(http_request_duration_seconds_bucket{job=\"backend\"}[5m]))",
+            "legendFormat": "99th percentile",
+            "refId": "C"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "s",
+            "color": {
+              "mode": "palette-classic"
+            }
+          }
+        }
+      },
+      {
+        "id": 4,
+        "title": "Error Rate",
+        "description": "HTTP 4xx and 5xx error rates",
+        "type": "timeseries",
+        "gridPos": {
+          "x": 0,
+          "y": 10,
+          "w": 6,
+          "h": 6
+        },
+        "targets": [
+          {
+            "expr": "rate(http_requests_total{job=\"backend\",status_code=~\"4..\"}[5m])",
+            "legendFormat": "4xx Errors",
+            "refId": "A"
+          },
+          {
+            "expr": "rate(http_requests_total{job=\"backend\",status_code=~\"5..\"}[5m])",
+            "legendFormat": "5xx Errors",
+            "refId": "B"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "reqps",
+            "color": {
+              "mode": "palette-classic"
+            }
+          }
+        }
+      },
+      {
+        "id": 5,
+        "title": "Request Volume by Endpoint",
+        "description": "Requests per endpoint over time",
+        "type": "timeseries",
+        "gridPos": {
+          "x": 6,
+          "y": 10,
+          "w": 6,
+          "h": 6
+        },
+        "targets": [
+          {
+            "expr": "rate(http_requests_total{job=\"backend\"}[5m])",
+            "legendFormat": "{{handler}}",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "reqps",
+            "color": {
+              "mode": "palette-classic"
+            }
+          }
+        }
+      },
+      {
+        "id": 6,
+        "title": "Top Endpoints",
+        "description": "Most frequently accessed endpoints",
+        "type": "table",
+        "gridPos": {
+          "x": 0,
+          "y": 16,
+          "w": 12,
+          "h": 6
+        },
+        "targets": [
+          {
+            "expr": "topk(10, rate(http_requests_total{job=\"backend\"}[5m]))",
+            "legendFormat": "",
+            "refId": "A",
+            "format": "table"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "reqps"
+          }
+        }
+      }
+    ],
+    "schemaVersion": 30,
+    "version": 1,
+    "editable": true
+  }
+}
