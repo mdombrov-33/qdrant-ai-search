@@ -1,0 +1,6 @@
+apiVersion: v2
+name: promtail
+description: Promtail log agent for Loki integration
+type: application
+version: 0.1.0
+appVersion: "2.9.0"

@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "loki.fullname" . }}
+  labels:
+    {{- include "loki.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "loki.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "loki.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+        - name: loki
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args:
+            - -config.file=/etc/loki/loki.yaml
+          ports:
+            - name: http
+              containerPort: {{ .Values.config.server.http_listen_port }}
+              protocol: TCP
+            - name: grpc
+              containerPort: {{ .Values.config.server.grpc_listen_port }}
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /ready
+              port: http
+            initialDelaySeconds: 45
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: http
+            initialDelaySeconds: 45
+            periodSeconds: 5
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - name: config
+              mountPath: /etc/loki
+            - name: storage
+              mountPath: /loki
+      volumes:
+        - name: config
+          configMap:
+            name: {{ include "loki.fullname" . }}-config
+        - name: storage
+          {{- if .Values.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ include "loki.fullname" . }}-pvc
+          {{- else }}
+          emptyDir: {}
+          {{- end }}

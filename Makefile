@@ -200,10 +200,22 @@ deploy-grafana:
 	@echo "💡 Access via: kubectl port-forward -n $(NAMESPACE) service/grafana 3000:3000"
 	@echo "💡 Login: admin/admin"
 
-deploy-monitoring: deploy-prometheus deploy-grafana
+deploy-loki:
+	@echo "📋 Deploying Loki log aggregation via Helm..."
+	helm upgrade --install loki ./helm/loki -n $(NAMESPACE)
+	@echo "✅ Loki deployed to Kubernetes"
+	@echo "💡 Access via: kubectl port-forward -n $(NAMESPACE) service/loki 3100:3100"
+
+deploy-promtail:
+	@echo "📨 Deploying Promtail log forwarder via Helm..."
+	helm upgrade --install promtail ./helm/promtail -n $(NAMESPACE)
+	@echo "✅ Promtail deployed to Kubernetes"
+
+deploy-monitoring: deploy-prometheus deploy-grafana deploy-loki deploy-promtail
 	@echo "🎯 Complete monitoring stack deployed!"
 	@echo "📊 Prometheus: kubectl port-forward -n $(NAMESPACE) service/prometheus 9090:9090"
 	@echo "📈 Grafana: kubectl port-forward -n $(NAMESPACE) service/grafana 3000:3000"
+	@echo "📋 Loki: kubectl port-forward -n $(NAMESPACE) service/loki 3100:3100"
 
 # ===============================================================================
 # 🐳 Docker Compose Support
@@ -242,6 +254,14 @@ restart-grafana:
 	@echo "🔄 Restarting Grafana deployment..."
 	kubectl rollout restart deployment/grafana -n $(NAMESPACE)
 
+restart-loki:
+	@echo "🔄 Restarting Loki deployment..."
+	kubectl rollout restart deployment/loki -n $(NAMESPACE)
+
+restart-promtail:
+	@echo "🔄 Restarting Promtail daemonset..."
+	kubectl rollout restart daemonset/promtail -n $(NAMESPACE)
+
 # ===============================================================================
 # 🧪 Debug & Monitoring Utilities
 # ===============================================================================
@@ -279,14 +299,16 @@ help:
 	@echo ""
 	@echo "☸️ Kubernetes Deployment:"
 	@echo "  make deploy-all                             # Deploy everything (including monitoring)"
-	@echo "  make deploy-monitoring                      # Deploy Prometheus + Grafana"
+	@echo "  make deploy-monitoring                      # Deploy Prometheus + Grafana + Loki + Promtail"
 	@echo "  make deploy-prometheus                      # Deploy Prometheus only"
 	@echo "  make deploy-grafana                         # Deploy Grafana only"
+	@echo "  make deploy-loki                            # Deploy Loki only"
+	@echo "  make deploy-promtail                        # Deploy Promtail only"
 	@echo "  make status                                 # Check pod status"
 	@echo "  make logs SERVICE=backend                   # View logs"
 	@echo "  make port SERVICE=grafana PORT=3000         # Access Grafana dashboard"
 
 .PHONY: format-python lint-python format-rust lint-rust format-all lint-all \
         build-backend build-rust build-backend-for-compose build-rust-for-compose \
-        deploy-backend deploy-rust deploy-qdrant deploy-prometheus deploy-grafana deploy-monitoring restart-backend restart-rust restart-qdrant restart-prometheus restart-grafana \
+        deploy-backend deploy-rust deploy-qdrant deploy-prometheus deploy-grafana deploy-loki deploy-promtail deploy-monitoring restart-backend restart-rust restart-qdrant restart-prometheus restart-grafana restart-loki restart-promtail \
         deploy-all status logs port bump-backend-version bump-rust-version sync-compose-env help

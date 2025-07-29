@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "promtail.fullname" . }}-config
+  labels:
+    {{- include "promtail.labels" . | nindent 4 }}
+data:
+  config.yml: |
+    server:
+      http_listen_port: {{ .Values.config.server.http_listen_port }}
+      grpc_listen_port: {{ .Values.config.server.grpc_listen_port }}
+
+    positions:
+      filename: {{ .Values.config.positions.filename }}
+
+    clients:
+      {{- range .Values.config.clients }}
+      - url: {{ .url }}
+      {{- end }}
+
+    scrape_configs:
+      {{- toYaml .Values.config.scrape_configs | nindent 6 }}

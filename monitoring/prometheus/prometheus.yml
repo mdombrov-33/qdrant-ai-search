@@ -1,0 +1,48 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  # - "first_rules.yml"
+  # - "second_rules.yml"
+
+scrape_configs:
+  # Prometheus itself
+  - job_name: "prometheus"
+    static_configs:
+      - targets: ["localhost:9090"]
+
+  # FastAPI Backend
+  - job_name: "backend"
+    static_configs:
+      - targets: ["backend:8000"]
+    metrics_path: "/metrics"
+    scrape_interval: 5s
+
+  # Rust Accelerator
+  - job_name: "rust-accelerator"
+    static_configs:
+      - targets: ["rust_accelerator:5000"]
+    metrics_path: "/metrics"
+    scrape_interval: 5s
+
+  # Qdrant Vector Database
+  - job_name: "qdrant"
+    static_configs:
+      - targets: ["qdrant:6333"]
+    metrics_path: "/metrics"
+    scrape_interval: 10s
+
+  # Grafana
+  - job_name: "grafana"
+    static_configs:
+      - targets: ["grafana:3000"]
+    metrics_path: "/metrics"
+    scrape_interval: 30s
+
+  # Loki
+  - job_name: "loki"
+    static_configs:
+      - targets: ["loki:3100"]
+    metrics_path: "/metrics"
+    scrape_interval: 30s

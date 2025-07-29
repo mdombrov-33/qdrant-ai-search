@@ -1,0 +1,6 @@
+apiVersion: v2
+name: loki
+description: Loki log aggregation for Qdrant AI Search monitoring
+type: application
+version: 0.1.0
+appVersion: "2.9.0"

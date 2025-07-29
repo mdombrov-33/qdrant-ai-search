@@ -454,8 +454,9 @@ qdrant-ai-search/
 │
 ├── 📊 monitoring/              # Observability stack
 │   ├── prometheus/             # Metrics collection
-│   ├── grafana/                # Dashboards
-│   └── loki/                   # Log aggregation
+│   ├── grafana/                # Dashboards and provisioning
+│   ├── loki/                   # Log aggregation configuration
+│   └── promtail/               # Log forwarding configuration
 │
 ├── 🔄 .github/workflows/       # CI/CD automation
 │   ├── build.yml               # Test & build
@@ -615,10 +616,10 @@ The observability stack provides comprehensive insights into system performance 
 
 **Loki Log Aggregation:**
 
-- Structured JSON logs from all services
-- Request tracing with correlation IDs
-- Error categorization and alerting
-- Search query and result logging for analytics
+- Structured JSON logs from all services with automatic service/level tagging
+- Request tracing with correlation IDs and contextual metadata
+- Error categorization and real-time log streaming in Grafana
+- Search query and result logging for analytics and debugging
 
 ### Access Points
 

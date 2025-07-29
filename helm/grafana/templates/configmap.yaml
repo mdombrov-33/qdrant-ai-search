@@ -49,3 +49,8 @@ data:
         access: proxy
         url: http://prometheus.qdrant-ai.svc.cluster.local:9090
         isDefault: true
+      - name: Loki
+        type: loki
+        access: proxy
+        url: http://loki.qdrant-ai.svc.cluster.local:3100
+        isDefault: false

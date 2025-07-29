@@ -1,0 +1,48 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "loki.fullname" . }}-config
+  labels:
+    {{- include "loki.labels" . | nindent 4 }}
+data:
+  loki.yaml: |
+    auth_enabled: {{ .Values.config.auth_enabled }}
+    
+    server:
+      http_listen_port: {{ .Values.config.server.http_listen_port }}
+      grpc_listen_port: {{ .Values.config.server.grpc_listen_port }}
+    
+    common:
+      path_prefix: {{ .Values.config.common.path_prefix }}
+      storage:
+        filesystem:
+          chunks_directory: {{ .Values.config.common.storage.filesystem.chunks_directory }}
+          rules_directory: {{ .Values.config.common.storage.filesystem.rules_directory }}
+      replication_factor: {{ .Values.config.common.replication_factor }}
+      ring:
+        instance_addr: {{ .Values.config.common.ring.instance_addr }}
+        kvstore:
+          store: {{ .Values.config.common.ring.kvstore.store }}
+
+    query_range:
+      results_cache:
+        cache:
+          embedded_cache:
+            enabled: {{ .Values.config.query_range.results_cache.cache.embedded_cache.enabled }}
+            max_size_mb: {{ .Values.config.query_range.results_cache.cache.embedded_cache.max_size_mb }}
+
+    schema_config:
+      configs:
+        - from: {{ (index .Values.config.schema_config.configs 0).from }}
+          store: {{ (index .Values.config.schema_config.configs 0).store }}
+          object_store: {{ (index .Values.config.schema_config.configs 0).object_store }}
+          schema: {{ (index .Values.config.schema_config.configs 0).schema }}
+          index:
+            prefix: {{ (index .Values.config.schema_config.configs 0).index.prefix }}
+            period: {{ (index .Values.config.schema_config.configs 0).index.period }}
+
+    ruler:
+      alertmanager_url: {{ .Values.config.ruler.alertmanager_url }}
+
+    analytics:
+      reporting_enabled: {{ .Values.config.analytics.reporting_enabled }}

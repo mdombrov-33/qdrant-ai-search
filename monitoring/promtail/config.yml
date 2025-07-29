@@ -1,0 +1,73 @@
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+
+positions:
+  filename: /tmp/positions.yaml
+
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+
+scrape_configs:
+  # Docker container logs with service discovery
+  - job_name: docker
+    docker_sd_configs:
+      - host: unix:///var/run/docker.sock
+        refresh_interval: 5s
+    
+    relabel_configs:
+      # Only scrape containers with logging=promtail label
+      - source_labels: ['__meta_docker_container_label_logging']
+        regex: 'promtail'
+        action: keep
+      
+      # Extract service name from label
+      - source_labels: ['__meta_docker_container_label_service']
+        target_label: 'service'
+      
+      # Extract container name
+      - source_labels: ['__meta_docker_container_name']
+        regex: '/(.*)'
+        target_label: 'container'
+      
+      # Set the log file path
+      - source_labels: ['__meta_docker_container_log_stream']
+        target_label: 'stream'
+      
+      # Set job label
+      - target_label: 'job'
+        replacement: 'docker'
+
+    pipeline_stages:
+      # Parse Docker JSON log format
+      - json:
+          expressions:
+            output: log
+            stream: stream
+            time: time
+      
+      # Try to parse application JSON logs
+      - json:
+          source: output
+          expressions:
+            level: level
+            message: message
+            logger: logger
+            app_service: service
+      
+      # Use app service name if available, otherwise use container service
+      - template:
+          source: final_service
+          template: '{{ if .app_service }}{{ .app_service }}{{ else }}{{ .service }}{{ end }}'
+      
+      # Set timestamp
+      - timestamp:
+          source: time
+          format: RFC3339Nano
+      
+      # Set labels (at least job and service are required)
+      - labels:
+          job:
+          service: final_service
+          container:
+          stream:
