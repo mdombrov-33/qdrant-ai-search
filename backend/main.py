@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from routes import health, config_routes, upload, search, summarize
 from services.qdrant_service import create_collection, client
+from prometheus_fastapi_instrumentator import Instrumentator
 from contextlib import asynccontextmanager
 from config import settings
 from utils.logging_config import logger
@@ -19,6 +20,8 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
+instrumentator = Instrumentator()
+instrumentator.instrument(app).expose(app)
 
 app.include_router(health.router)
 app.include_router(config_routes.router)
