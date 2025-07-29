@@ -50,13 +50,31 @@ async def _make_embedding_request(text: str) -> list[float]:
         "input": text,
     }
 
-    async with httpx.AsyncClient(timeout=60.0) as client:
-        response = await client.post(
-            OPENAI_EMBEDDING_URL, headers=headers, json=json_data
-        )
-        response.raise_for_status()
-        data = response.json()
-        return data["data"][0]["embedding"]
+    # Multiple timeout strategies for Railway connectivity issues
+    timeouts = [10.0, 20.0, 30.0]
+
+    for i, timeout_val in enumerate(timeouts):
+        try:
+            async with httpx.AsyncClient(
+                timeout=httpx.Timeout(timeout=timeout_val, connect=10.0),
+                limits=httpx.Limits(max_connections=1, max_keepalive_connections=0),
+            ) as client:
+                response = await client.post(
+                    OPENAI_EMBEDDING_URL, headers=headers, json=json_data
+                )
+                response.raise_for_status()
+                data = response.json()
+                return data["data"][0]["embedding"]
+        except (httpx.TimeoutException, httpx.ConnectError) as e:
+            if i == len(timeouts) - 1:  # Last attempt
+                raise EmbeddingGenerationError(
+                    f"OpenAI API timeout after all retries: {e}"
+                )
+            await asyncio.sleep(2**i)  # Exponential backoff: 1s, 2s, 4s
+            continue
+
+    # This should never be reached due to the raise in the except block
+    raise EmbeddingGenerationError("OpenAI API request failed unexpectedly")
 
 
 async def get_embedding(text: str, max_retries: int = 3) -> list[float]:
