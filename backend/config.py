@@ -1,10 +1,11 @@
 from pydantic_settings import BaseSettings
+import os
 
 
 class Settings(BaseSettings):
-    OPENAI_API_KEY: str
-    QDRANT_URL: str
-    RUST_SERVICE_URL: str
+    OPENAI_API_KEY: str = "test-key" if os.getenv("TESTING") else ""
+    QDRANT_URL: str = "http://localhost:6333" if os.getenv("TESTING") else ""
+    RUST_SERVICE_URL: str = "http://localhost:8001" if os.getenv("TESTING") else ""
     QDRANT_COLLECTION_NAME: str = "documents"
 
     # Chat completion settings

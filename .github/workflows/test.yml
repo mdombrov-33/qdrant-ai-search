@@ -14,8 +14,12 @@ jobs:
       - name: Install dependencies
         run: cd backend && poetry install --no-root
       - name: Run tests
+        env:
+          TESTING: "true"
         run: cd backend && poetry run pytest
       - name: Lint
+        env:
+          TESTING: "true"
         run: cd backend && poetry run ruff check .
 
   test-rust:
