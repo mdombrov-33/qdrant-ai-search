@@ -50,7 +50,7 @@ async def _make_embedding_request(text: str) -> list[float]:
         "input": text,
     }
 
-    async with httpx.AsyncClient(timeout=30.0) as client:
+    async with httpx.AsyncClient(timeout=60.0) as client:
         response = await client.post(
             OPENAI_EMBEDDING_URL, headers=headers, json=json_data
         )
