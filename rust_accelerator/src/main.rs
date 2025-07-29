@@ -64,6 +64,10 @@ async fn main() -> std::io::Result<()> {
     println!(" Rust Accelerator v2.5 - Balanced Domain Filtering");
     println!(" Build ID: domain-filter-balanced-v1");
 
+    // Initialize metrics counter at startup so it appears in /metrics even with 0 requests
+    let _counter = get_request_counter();
+    println!(" Metrics initialized: rerank_requests_total counter ready");
+
     // Start HTTP server
     // Wrap bind in match to catch errors and log them gracefully
     let server = HttpServer::new(|| {
