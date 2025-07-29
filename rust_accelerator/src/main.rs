@@ -14,6 +14,9 @@ mod models;
 mod services;
 mod utils;
 
+#[cfg(test)]
+mod tests;
+
 // Global metrics - this will count total requests to /re-rank
 static REQUEST_COUNTER: OnceLock<Counter> = OnceLock::new();
 

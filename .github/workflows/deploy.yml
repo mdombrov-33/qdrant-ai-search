@@ -1,0 +1,30 @@
+name: Build & Deploy
+on:
+  push:
+    branches: [main]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Build and push images
+        run: |
+          # Build backend
+          docker build -t ghcr.io/${{ github.repository }}/backend:${{ github.sha }} ./backend
+          docker push ghcr.io/${{ github.repository }}/backend:${{ github.sha }}
+          
+          # Build rust
+          docker build -t ghcr.io/${{ github.repository }}/rust-accelerator:${{ github.sha }} ./rust_accelerator  
+          docker push ghcr.io/${{ github.repository }}/rust-accelerator:${{ github.sha }}
+      
+      # Actual K8s deployment would need cluster access
+      # For now, this shows the CI/CD pattern
