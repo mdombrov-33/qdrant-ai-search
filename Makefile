@@ -187,6 +187,12 @@ deploy-qdrant:
 	helm upgrade --install qdrant ./helm/qdrant -n $(NAMESPACE)
 	@echo "✅ Qdrant deployed to Kubernetes"
 
+deploy-prometheus:
+	@echo "📊 Deploying Prometheus monitoring via Helm..."
+	helm upgrade --install prometheus ./helm/prometheus -n $(NAMESPACE)
+	@echo "✅ Prometheus deployed to Kubernetes"
+	@echo "💡 Access via: kubectl port-forward -n $(NAMESPACE) service/prometheus 9090:9090"
+
 # ===============================================================================
 # 🐳 Docker Compose Support
 # ===============================================================================
@@ -216,12 +222,16 @@ restart-qdrant:
 	@echo "🔄 Restarting Qdrant deployment..."
 	kubectl rollout restart deployment/qdrant -n $(NAMESPACE)
 
+restart-prometheus:
+	@echo "🔄 Restarting Prometheus deployment..."
+	kubectl rollout restart deployment/prometheus -n $(NAMESPACE)
+
 # ===============================================================================
 # 🧪 Debug & Monitoring Utilities
 # ===============================================================================
 
-deploy-all: deploy-backend deploy-rust deploy-qdrant
-	@echo "🎉 All services deployed to Kubernetes!"
+deploy-all: deploy-backend deploy-rust deploy-qdrant deploy-prometheus
+	@echo "🎉 All services (including monitoring) deployed to Kubernetes!"
 
 status:
 	@echo "📊 Kubernetes pod status:"
@@ -252,13 +262,13 @@ help:
 	@echo "  docker-compose -f docker-compose.prod.yml up         # Test specific versions"
 	@echo ""
 	@echo "☸️ Kubernetes Deployment:"
-	@echo "  make deploy-all                             # Deploy everything"
+	@echo "  make deploy-all                             # Deploy everything (including monitoring)"
+	@echo "  make deploy-prometheus                      # Deploy Prometheus monitoring"
 	@echo "  make status                                 # Check pod status"
 	@echo "  make logs SERVICE=backend                   # View logs"
-	@echo "  make port SERVICE=backend PORT=8000         # Port forward"
-	@echo ""
+	@echo "  make port SERVICE=prometheus PORT=9090      # Access Prometheus UI"
 
 .PHONY: format-python lint-python format-rust lint-rust format-all lint-all \
         build-backend build-rust build-backend-for-compose build-rust-for-compose \
-        deploy-backend deploy-rust deploy-qdrant restart-backend restart-rust restart-qdrant \
+        deploy-backend deploy-rust deploy-qdrant deploy-prometheus restart-backend restart-rust restart-qdrant restart-prometheus \
         deploy-all status logs port bump-backend-version bump-rust-version sync-compose-env help
