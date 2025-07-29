@@ -61,7 +61,7 @@ async fn main() -> std::io::Result<()> {
     // Set RUST_LOG=info for normal logging, RUST_LOG=debug for verbose logging
     env_logger::init();
 
-    println!(" Rust Accelerator v2.4 - Balanced Domain Filtering");
+    println!(" Rust Accelerator v2.5 - Balanced Domain Filtering");
     println!(" Build ID: domain-filter-balanced-v1");
 
     // Start HTTP server

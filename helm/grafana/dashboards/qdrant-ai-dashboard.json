@@ -1,7 +1,6 @@
 {
-  "dashboard": {
-    "id": null,
-    "title": "Qdrant AI Search Platform Metrics",
+  "id": null,
+  "title": "Qdrant AI Search Platform Metrics",
     "description": "Monitoring dashboard for FastAPI backend and Rust accelerator services",
     "tags": ["qdrant", "ai", "search", "monitoring"],
     "timezone": "browser",
@@ -187,9 +186,8 @@
           }
         }
       }
-    ],
-    "schemaVersion": 30,
-    "version": 1,
-    "editable": true
-  }
+  ],
+  "schemaVersion": 30,
+  "version": 1,
+  "editable": true
 }
