@@ -9,7 +9,7 @@ from exceptions import QdrantServiceError, VectorSearchError
 
 QDRANT_URL = os.getenv("QDRANT_URL", "http://localhost:6333")
 
-client = QdrantClient(url=QDRANT_URL)
+client = QdrantClient(url=QDRANT_URL, prefer_grpc=False)
 
 
 def create_collection(
