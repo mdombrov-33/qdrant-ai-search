@@ -11,8 +11,8 @@ import asyncio
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    retries = 5
-    delay = 2
+    retries = 10
+    delay = 3
     qdrant_connected = False
     for attempt in range(retries):
         try:

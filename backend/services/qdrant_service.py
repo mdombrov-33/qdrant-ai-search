@@ -1,4 +1,3 @@
-import os
 import uuid
 from typing import List
 from utils.logging_config import logger
@@ -6,12 +5,12 @@ from qdrant_client import QdrantClient
 from qdrant_client.http.models import Distance, VectorParams, PointStruct
 from qdrant_client.http.exceptions import UnexpectedResponse
 from exceptions import QdrantServiceError, VectorSearchError
+from config import settings
 
-QDRANT_URL = os.getenv("QDRANT_URL", "http://localhost:6333")
 
-client = QdrantClient(url=QDRANT_URL, prefer_grpc=False)
+client = QdrantClient(url=settings.QDRANT_URL, prefer_grpc=False)
 
-logger.info(f"Connecting to Qdrant at {QDRANT_URL} with prefer_grpc=False")
+logger.info(f"Connecting to Qdrant at {settings.QDRANT_URL} with prefer_grpc=False")
 
 
 def create_collection(
