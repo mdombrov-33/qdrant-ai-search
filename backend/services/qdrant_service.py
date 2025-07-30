@@ -1,4 +1,5 @@
 import uuid
+import requests
 from typing import List
 from utils.logging_config import logger
 from qdrant_client import QdrantClient
@@ -6,13 +7,20 @@ from qdrant_client.http.models import Distance, VectorParams, PointStruct
 from qdrant_client.http.exceptions import UnexpectedResponse
 from exceptions import QdrantServiceError, VectorSearchError
 from config import settings
-import requests
 
 
-# Test basic HTTP connectivity for Railway test
+# Test basic connectivity
 try:
     response = requests.get(f"{settings.QDRANT_URL}/collections", timeout=10)
-    logger.info(f"HTTP test successful: {response.status_code}")
+    logger.info(f"GET /collections successful: {response.status_code}")
+
+    # Test creating a collection via HTTP
+    test_collection = {"vectors": {"size": 384, "distance": "Cosine"}}
+    response = requests.put(
+        f"{settings.QDRANT_URL}/collections/http_test", json=test_collection, timeout=10
+    )
+    logger.info(f"PUT collection via HTTP: {response.status_code}")
+
 except Exception as e:
     logger.error(f"HTTP test failed: {e}")
 
