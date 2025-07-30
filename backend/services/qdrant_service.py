@@ -6,6 +6,15 @@ from qdrant_client.http.models import Distance, VectorParams, PointStruct
 from qdrant_client.http.exceptions import UnexpectedResponse
 from exceptions import QdrantServiceError, VectorSearchError
 from config import settings
+import requests
+
+
+# Test basic HTTP connectivity for Railway test
+try:
+    response = requests.get(f"{settings.QDRANT_URL}/collections", timeout=10)
+    logger.info(f"HTTP test successful: {response.status_code}")
+except Exception as e:
+    logger.error(f"HTTP test failed: {e}")
 
 
 client = QdrantClient(url=settings.QDRANT_URL, prefer_grpc=False, timeout=60)
