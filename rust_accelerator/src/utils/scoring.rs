@@ -65,30 +65,30 @@ impl ScoreCalculator {
         // Start with the original Qdrant similarity score
         let base_score = result.score;
 
-        // === ALGORITHM 1: TEXT QUALITY ADJUSTMENT ===
+        //* */ === ALGORITHM 1: TEXT QUALITY ADJUSTMENT ===
         // Apply as a smaller multiplier to avoid too much penalty
         let quality_factor = self.calculate_text_quality_factor(&result.text);
         let quality_adjustment = (quality_factor - 1.0) * self.weights.text_quality;
 
-        // === ALGORITHM 2: KEYWORD MATCHING BOOST ===
-        // This should be additive to reward exact matches
+        //* */ === ALGORITHM 2: KEYWORD MATCHING BOOST ===
+        //* */ This should be additive to reward exact matches
         let keyword_boost = self.calculate_keyword_boost(&result.text, query_features);
 
-        // === ALGORITHM 3: LENGTH OPTIMIZATION ===
-        // Apply as smaller adjustment, not harsh multiplier
+        //* */ === ALGORITHM 3: LENGTH OPTIMIZATION ===
+        //* */ Apply as smaller adjustment, not harsh multiplier
         let length_factor = self.calculate_length_factor(result.text.len());
         let length_adjustment = (length_factor - 1.0) * self.weights.length_optimization;
 
-        // === ALGORITHM 4: POSITION DECAY ===
-        // Keep as small multiplicative penalty
+        //* */ === ALGORITHM 4: POSITION DECAY ===
+        //* */ Keep as small multiplicative penalty
         let position_factor = self.calculate_position_factor(position);
         let position_penalty = position_factor * self.weights.position_decay;
 
-        // === ALGORITHM 5: COMPLETENESS BONUS ===
-        // Small bonus for complete sentences and well-formed text
+        //* */ === ALGORITHM 5: COMPLETENESS BONUS ===
+        //* */ Small bonus for complete sentences and well-formed text
         let completeness_bonus = self.calculate_completeness_bonus(&result.text);
 
-        // Combine all factors more conservatively
+        //* */ Combine all factors more conservatively
         let mut final_score = base_score;
         final_score += quality_adjustment; // Add/subtract quality
         final_score += keyword_boost * self.weights.keyword_matching; // Add keyword boost
@@ -96,7 +96,7 @@ impl ScoreCalculator {
         final_score *= 1.0 - position_penalty; // Small position penalty
         final_score += completeness_bonus * self.weights.completeness; // Add completeness
 
-        // Ensure score stays in valid range but allow enhancement above 1.0
+        //* */ Ensure score stays in valid range but allow enhancement above 1.0
         final_score.clamp(0.0, 2.0)
     }
 
