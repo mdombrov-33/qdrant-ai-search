@@ -24,7 +24,7 @@ impl TextAnalyzer {
     /// much meaning for search relevance. We filter these out to focus on
     /// meaningful terms.
     pub fn new() -> Self {
-        // In a real system, you'd load this from a file or configuration
+        // In a real system, we would load this from a file or configuration
         let stop_words = [
             "the", "a", "an", "and", "or", "but", "in", "on", "at", "to", "for", "of", "with",
             "by", "is", "are", "was", "were", "be", "been", "have", "has", "had", "do", "does",

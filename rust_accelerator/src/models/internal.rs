@@ -10,16 +10,6 @@ use std::collections::HashMap;
 ///
 /// Instead of re-analyzing the query for every result, we do it once upfront.
 /// This is a common optimization pattern in information retrieval systems.
-///
-/// In Python, this would be a dataclass:
-/// ```python
-/// @dataclass
-/// class QueryFeatures:
-///     original: str
-///     meaningful_words: List[str]
-///     word_frequencies: Dict[str, int]
-///     total_words: int
-/// ```
 #[derive(Debug, Clone)]
 pub struct QueryFeatures {
     /// Frequency count for TF-IDF style weighting

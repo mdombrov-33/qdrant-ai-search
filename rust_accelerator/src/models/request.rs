@@ -10,15 +10,6 @@ use std::collections::HashMap;
 ///
 /// This represents the JSON payload that FastAPI sends to our Rust service.
 /// The `Deserialize` trait allows us to automatically convert JSON to this struct.
-///
-/// In TypeScript, this would be an interface:
-/// ```typescript
-/// interface ReRankRequest {
-///   query: string;
-///   results: SearchResult[];
-///   limit: number;
-/// }
-/// ```
 #[derive(Debug, Deserialize)]
 pub struct ReRankRequest {
     /// The original search query from the user

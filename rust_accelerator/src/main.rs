@@ -1,8 +1,7 @@
 //! Main entry point for the Rust re-ranking service.
 //!
 //! This file sets up the HTTP server, configures logging, registers routes,
-//! and starts the application. It's like the main() function in other languages
-//! or the app setup in Express.js.
+//! and starts the application.
 
 use actix_web::{App, HttpResponse, HttpServer, Result, middleware::Logger, web};
 use prometheus::{Counter, Encoder, TextEncoder, register_counter};
@@ -43,20 +42,6 @@ async fn metrics_handler() -> Result<HttpResponse> {
 /// The `#[actix_web::main]` attribute sets up the async runtime.
 /// This is similar to how Node.js handles async operations, but Rust
 /// requires explicit async runtime setup.
-///
-/// In Node.js/Express, the equivalent would be:
-/// ```javascript
-/// const express = require('express');
-/// const app = express();
-///
-/// app.use(express.json());
-/// app.get('/health', healthHandler);
-/// app.post('/re-rank', rerankHandler);
-///
-/// app.listen(5000, () => {
-///   console.log('Server running on port 5000');
-/// });
-/// ```
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     // Initialize logging
@@ -75,7 +60,7 @@ async fn main() -> std::io::Result<()> {
     // Wrap bind in match to catch errors and log them gracefully
     let server = HttpServer::new(|| {
         App::new()
-            // Add request logging middleware (like Morgan in Express)
+            // Add request logging middleware
             .wrap(Logger::default())
             // Register routes
             .route("/health", web::get().to(handlers::health::health_check))

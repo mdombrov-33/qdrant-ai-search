@@ -2,9 +2,6 @@
 //!
 //! Think of this as the "controller" in an MVC pattern - it coordinates between
 //! different specialized modules to transform raw search results into optimized ones.
-//!
-//! In Python/TypeScript, this would be like a class that imports various utility
-//! functions and combines them into a cohesive workflow.
 
 use crate::error::AppError;
 use crate::models::internal::EnhancedResult;
@@ -24,15 +21,6 @@ use std::time::Instant;
 /// - Score calculator for algorithm application  
 /// - Result filter for quality control
 /// - Similarity calculator for deduplication
-///
-/// In Python, this would be like:
-/// ```python
-/// class DocumentReRanker:
-///     def __init__(self):
-///         self.text_analyzer = TextAnalyzer()
-///         self.score_calculator = ScoreCalculator()
-///         # etc...
-/// ```
 pub struct DocumentReRanker {
     /// Handles all text preprocessing and analysis
     text_analyzer: TextAnalyzer,
@@ -72,25 +60,22 @@ impl DocumentReRanker {
     /// 6. Apply final limits
     ///
     /// The `async` keyword means this function can be paused and resumed,
-    /// allowing other tasks to run while we wait. In Python, this would be:
-    /// ```python
-    /// async def rerank_documents(self, req: ReRankRequest) -> ReRankResponse:
-    /// ```
+    /// allowing other tasks to run while we wait.
     pub async fn rerank_documents(&self, req: ReRankRequest) -> Result<ReRankResponse, AppError> {
         let start = Instant::now();
 
-        // === STEP 1: INPUT VALIDATION ===
+        //* */ === STEP 1: INPUT VALIDATION ===
         // We validate early to fail fast - no point processing invalid data
         self.validate_input(&req)?;
 
-        // === STEP 2: QUERY PREPROCESSING ===
+        //* */ === STEP 2: QUERY PREPROCESSING ===
         // Extract meaningful features from the search query once, then reuse
         // This is like tokenizing and preprocessing in NLP pipelines
         let query_features = self
             .text_analyzer
             .extract_query_features(&req.query, req.idf_map.clone());
 
-        // === STEP 3: PARALLEL RESULT PROCESSING WITH DOMAIN FILTERING ===
+        //* */ === STEP 3: PARALLEL RESULT PROCESSING WITH DOMAIN FILTERING ===
         // Process all results in parallel, filtering and enhancing scores
         // The `into_iter()` takes ownership, `enumerate()` adds position index
         let mut enhanced_results: Vec<EnhancedResult> = req
@@ -122,7 +107,7 @@ impl DocumentReRanker {
             })
             .collect(); // Convert iterator back to Vec
 
-        // === STEP 4: ADVANCED SORTING ===
+        //* */ === STEP 4: ADVANCED SORTING ===
         // Sort by enhanced score (descending), with original position as tiebreaker
         enhanced_results.sort_by(|a, b| {
             match b.enhanced_score.partial_cmp(&a.enhanced_score) {
@@ -134,13 +119,13 @@ impl DocumentReRanker {
             }
         });
 
-        // === STEP 5: DEDUPLICATION ===
+        //* */ === STEP 5: DEDUPLICATION ===
         // Remove results that are too similar to each other
         let deduplicated = self
             .similarity_calculator
             .remove_duplicates(enhanced_results);
 
-        // === STEP 6: FINAL FORMATTING ===
+        //* */ === STEP 6: FINAL FORMATTING ===
         // Convert to response format and apply limit
         let final_results: Vec<ReRankedResult> = deduplicated
             .into_iter()
@@ -168,7 +153,6 @@ impl DocumentReRanker {
     /// clear error messages rather than mysterious failures later.
     ///
     /// The `?` operator is Rust's way of early returning on error.
-    /// In Python, this would be like raising exceptions.
     fn validate_input(&self, req: &ReRankRequest) -> Result<(), AppError> {
         if req.query.trim().is_empty() {
             return Err(AppError::InvalidInput("Query string is empty".into()));

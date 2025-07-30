@@ -10,8 +10,6 @@ use crate::models::request::SearchResult;
 /// Configuration for score weighting.
 ///
 /// These constants control how much each algorithm contributes to the final score.
-/// In a production system, these would be tunable parameters that you could
-/// A/B test or optimize based on user feedback.
 pub struct ScoreWeights {
     pub text_quality: f64,        // How much to weight content quality
     pub keyword_matching: f64,    // How much to weight keyword overlap
