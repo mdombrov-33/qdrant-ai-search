@@ -17,7 +17,9 @@ except Exception as e:
     logger.error(f"HTTP test failed: {e}")
 
 
-client = QdrantClient(url=settings.QDRANT_URL, prefer_grpc=False, timeout=60)
+client = QdrantClient(
+    url=settings.QDRANT_URL, prefer_grpc=False, timeout=60, https=True, port=443
+)
 
 logger.info(f"Connecting to Qdrant at {settings.QDRANT_URL} with prefer_grpc=False")
 
