@@ -552,6 +552,152 @@ helm upgrade --install qdrant ./helm/qdrant -n qdrant-ai
 make deploy-all
 ```
 
+---
+### Railway Deployment (Cloud Platform)
+
+**⚠️ Important Railway Configuration Notes**
+
+Railway is a convenient cloud platform, but it has specific networking behavior that can cause connection timeouts with certain clients. Here's the configuration that works:
+
+#### The Issue: Qdrant Client Timeouts
+
+**Symptoms:**
+- Qdrant service responds normally to `curl` requests
+- Basic HTTP requests from the backend work fine
+- The Qdrant Python client times out during initialization
+- Logs show: `timed out`, `Connection refused`, or `Read timed out`
+
+**Root Cause:**
+The Qdrant Python client has default timeout settings that don't work well with Railway's proxy layer. HTTP requests work fine, but the client's connection handling needs adjustment.
+
+#### The Solution
+
+**1. Configure Client Timeouts:**
+
+```python
+# In your qdrant_service.py - essential for Railway
+client = QdrantClient(
+    url=settings.QDRANT_URL, 
+    prefer_grpc=False,
+    timeout=60,  # Increase from default to 60s
+    https=True,
+    port=443
+)
+```
+
+**2. Add HTTP Connectivity Test (for debugging):**
+
+```python
+import requests
+
+# Add this to verify basic HTTP works while client fails
+try:
+    response = requests.get(f"{settings.QDRANT_URL}/collections", timeout=10)
+    logger.info(f"HTTP test successful: {response.status_code}")
+except Exception as e:
+    logger.error(f"HTTP test failed: {e}")
+```
+
+**3. Handle Startup Reliability:**
+
+```python
+# Robust startup retry logic for Railway
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    retries = 10
+    delay = 3
+    for attempt in range(retries):
+        try:
+            create_collection(client, settings.QDRANT_COLLECTION_NAME, vector_size=1536)
+            logger.info("Qdrant collection created successfully on startup")
+            break
+        except Exception as e:
+            logger.warning(f"Attempt {attempt + 1} failed: {e}")
+            if attempt < retries - 1:
+                await asyncio.sleep(delay)
+                delay *= 2
+    yield
+```
+
+#### Railway-Specific Environment Variables
+
+```bash
+# Use public HTTPS URLs for Railway
+QDRANT_URL=https://your-qdrant-service.up.railway.app
+
+# Internal networking can be unreliable:
+# QDRANT_URL=http://qdrant.railway.internal:6333  # Alternative, but less reliable
+
+# Set longer timeouts for Railway's network latency
+QDRANT_TIMEOUT=60
+```
+
+#### Service Configuration Checklist
+
+**Railway Qdrant Service Settings:**
+- ✅ Public networking enabled on port 6333
+- ✅ Service name exactly matches your URL expectations
+- ✅ No authentication required (or properly configured if enabled)
+
+**Railway Backend Service Settings:**
+- ✅ Environment variables properly set
+- ✅ Same region as Qdrant service (EU West recommended)
+- ✅ Sufficient resource limits (timeouts can be caused by resource starvation)
+
+#### Configuration Notes
+
+```bash
+# Avoid default client timeouts on Railway
+client = QdrantClient(url=settings.QDRANT_URL)  # May timeout
+
+# Use public URLs rather than internal networking for reliability
+QDRANT_URL=http://qdrant.railway.internal:6333  # Can be unreliable
+```
+
+#### Deployment Steps for Railway
+
+1. **Deploy Qdrant Service:**
+   ```bash
+   # Use official Qdrant Docker image
+   # Source: qdrant/qdrant:latest
+   # Enable public networking on port 6333
+   ```
+
+2. **Deploy Backend Service:**
+   ```bash
+   # Set environment variables:
+   QDRANT_URL=https://your-qdrant-production-xxxx.up.railway.app
+   OPENAI_API_KEY=your_openai_key
+   
+   # Deploy and watch logs for successful collection creation
+   ```
+
+3. **Test the Pipeline:**
+   ```bash
+   # Test search endpoint (should return empty results initially)
+   curl -X POST "https://your-backend-production-xxxx.up.railway.app/api/search" \
+     -H "Content-Type: application/json" \
+     -d '{"query": "test", "limit": 5}'
+   
+   # Should return: {"results":[],"query_time_ms":0,"total_found":0}
+   ```
+
+#### Why This Happens (Technical Deep-dive)
+
+Railway uses a proxy layer for public networking that adds connection overhead. The Qdrant Python client uses conservative timeout settings optimized for direct connections. Increasing the timeout resolves the initialization issues while maintaining functionality.
+
+#### Alternative: Self-Hosted Qdrant
+
+If Railway continues to be problematic, consider:
+- **Docker Compose locally** (works perfectly)
+- **Kubernetes deployment** (as shown in main README)
+- **Qdrant Cloud** (official hosted service)
+- **Other cloud providers** (DigitalOcean, AWS, etc.)
+
+**Summary:** Railway works well once the client timeout is configured properly. The key fix is setting `timeout=60` in the QdrantClient constructor and using the public HTTPS URLs.
+
+---
+
 ### Environment Variables
 
 | Variable           | Description          | Default                 |
