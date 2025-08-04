@@ -1151,6 +1151,7 @@ dependencies = [
  "prometheus",
  "serde",
  "serde_json",
+ "stop-words",
  "textdistance",
  "thiserror 2.0.12",
  "tokio",
@@ -1281,6 +1282,15 @@ name = "stable_deref_trait"
 version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a8f112729512f8e442d81f95a8a7ddf2b7c6b8a1a6f509a95864142b30cab2d3"
+
+[[package]]
+name = "stop-words"
+version = "0.8.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3c6a86be9f7fa4559b7339669e72026eb437f5e9c5a85c207fe1033079033a17"
+dependencies = [
+ "serde_json",
+]
 
 [[package]]
 name = "syn"

@@ -6,6 +6,7 @@
 
 use crate::models::internal::QueryFeatures;
 use std::collections::{HashMap, HashSet};
+use stop_words::{LANGUAGE, get};
 
 /// Handles text analysis and preprocessing operations.
 ///
@@ -24,17 +25,10 @@ impl TextAnalyzer {
     /// much meaning for search relevance. We filter these out to focus on
     /// meaningful terms.
     pub fn new() -> Self {
-        // In a real system, we would load this from a file or configuration
-        let stop_words = [
-            "the", "a", "an", "and", "or", "but", "in", "on", "at", "to", "for", "of", "with",
-            "by", "is", "are", "was", "were", "be", "been", "have", "has", "had", "do", "does",
-            "did", "will", "would", "could", "should", "may", "might", "can", "this", "that",
-            "these", "those", "i", "you", "he", "she", "it", "we", "they", "me", "him", "her",
-            "us", "them",
-        ]
-        .iter()
-        .map(|&s| s.to_lowercase()) // Convert to lowercase for case-insensitive matching
-        .collect();
+        let stop_words = get(LANGUAGE::English)
+            .into_iter()
+            .map(|s| s.to_lowercase())
+            .collect();
 
         Self { stop_words }
     }
