@@ -49,8 +49,7 @@ async fn main() -> std::io::Result<()> {
     // Set RUST_LOG=info for normal logging, RUST_LOG=debug for verbose logging
     env_logger::init();
 
-    println!(" Rust Accelerator v2.5 - Balanced Domain Filtering");
-    println!(" Build ID: domain-filter-balanced-v1");
+    println!(" Rust Accelerator - Jaccard Improvement");
 
     // Initialize metrics counter at startup so it appears in /metrics even with 0 requests
     let _counter = get_request_counter();

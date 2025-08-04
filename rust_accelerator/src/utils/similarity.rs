@@ -4,7 +4,7 @@
 //! and remove duplicate or near-duplicate results from the search output.
 
 use crate::models::internal::EnhancedResult;
-use std::collections::HashSet;
+use textdistance::nstr::jaccard;
 
 /// Handles text similarity calculations and deduplication.
 ///
@@ -69,88 +69,6 @@ impl SimilarityCalculator {
     /// Union: {the, quick, brown, fox, jumps} = 5 words
     /// Similarity: 3/5 = 0.6 (60% similar)
     pub fn jaccard_similarity(&self, text1: &str, text2: &str) -> f64 {
-        // Store lowercase versions in variables to keep them alive for &str slices
-        let lowered1 = text1.to_lowercase();
-        let lowered2 = text2.to_lowercase();
-
-        // Convert texts to sets of words (case-insensitive)
-        let words1: HashSet<&str> = lowered1.split_whitespace().collect();
-        let words2: HashSet<&str> = lowered2.split_whitespace().collect();
-
-        // Handle edge case of empty texts
-        if words1.is_empty() && words2.is_empty() {
-            return 1.0; // Two empty texts are identical
-        }
-
-        // Calculate intersection and union sizes
-        let intersection_size = words1.intersection(&words2).count();
-        let union_size = words1.union(&words2).count();
-
-        // Calculate Jaccard coefficient
-        if union_size == 0 {
-            0.0 // Avoid division by zero
-        } else {
-            intersection_size as f64 / union_size as f64
-        }
-    }
-
-    /// Calculates cosine similarity between two texts (alternative algorithm).
-    ///
-    /// Cosine similarity treats texts as vectors in high-dimensional space
-    /// and measures the angle between them. It's often better than Jaccard
-    /// for texts of very different lengths.
-    ///
-    /// This implementation uses simple word frequency vectors.
-    /// In production, you might use TF-IDF weights or embeddings.
-    #[allow(dead_code)] // Mark as unused for now
-    pub fn cosine_similarity(&self, text1: &str, text2: &str) -> f64 {
-        use std::collections::HashMap;
-
-        // Store lowercase versions to keep alive while borrowing slices
-        let lowered1 = text1.to_lowercase();
-        let lowered2 = text2.to_lowercase();
-
-        // Build word frequency vectors
-        let mut freq1 = HashMap::new();
-        let mut freq2 = HashMap::new();
-
-        // Count words in text1
-        for word in lowered1.split_whitespace() {
-            *freq1.entry(word).or_insert(0) += 1;
-        }
-
-        // Count words in text2
-        for word in lowered2.split_whitespace() {
-            *freq2.entry(word).or_insert(0) += 1;
-        }
-
-        // Get all unique words from both texts
-        let all_words: HashSet<&str> = freq1.keys().chain(freq2.keys()).copied().collect();
-
-        if all_words.is_empty() {
-            return 0.0;
-        }
-
-        // Calculate dot product and magnitudes
-        let mut dot_product = 0.0;
-        let mut magnitude1 = 0.0;
-        let mut magnitude2 = 0.0;
-
-        for word in all_words {
-            let f1 = *freq1.get(word).unwrap_or(&0) as f64;
-            let f2 = *freq2.get(word).unwrap_or(&0) as f64;
-
-            dot_product += f1 * f2;
-            magnitude1 += f1 * f1;
-            magnitude2 += f2 * f2;
-        }
-
-        // Calculate cosine similarity
-        let magnitude_product = magnitude1.sqrt() * magnitude2.sqrt();
-        if magnitude_product == 0.0 {
-            0.0
-        } else {
-            dot_product / magnitude_product
-        }
+        jaccard(text1, text2)
     }
 }
