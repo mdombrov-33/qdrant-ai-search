@@ -5,6 +5,7 @@
 //! pipeline in a machine learning project.
 
 use crate::models::internal::QueryFeatures;
+use rust_stemmers::{Algorithm, Stemmer};
 use std::collections::{HashMap, HashSet};
 use stop_words::{LANGUAGE, get};
 
@@ -54,10 +55,11 @@ impl TextAnalyzer {
         let normalized = query.to_lowercase();
 
         // Step 2: Extract meaningful single words with basic stemming
+        let stemmer = Stemmer::create(Algorithm::English);
         let single_words: Vec<String> = normalized
             .split_whitespace()
             .filter(|word| !self.stop_words.contains(*word) && word.len() >= 2)
-            .map(|word| word.trim_end_matches('s').to_string())
+            .map(|word| stemmer.stem(word).to_string())
             .collect();
 
         // Step 3: Extract meaningful 2-word phrases
