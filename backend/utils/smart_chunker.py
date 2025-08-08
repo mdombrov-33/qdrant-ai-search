@@ -9,6 +9,8 @@ This implementation uses:
 
 from typing import List, Optional
 from dataclasses import dataclass
+import re
+import unicodedata
 
 # Library imports
 from langchain_text_splitters import RecursiveCharacterTextSplitter
@@ -48,6 +50,20 @@ class SmartChunker:
             subprocess.run(["python", "-m", "spacy", "download", "en_core_web_sm"])
             self.nlp = spacy.load("en_core_web_sm")
 
+        # OCR artifact patterns to clean
+        self.ocr_fixes = [
+            (r"\boffi ce\b", "office"),
+            (r"\bthe m\b", "them"),
+            (r"\bwith in\b", "within"),
+            (r"\bover all\b", "overall"),
+            (r"\bfl ying\b", "flying"),
+            (r"\bfi ve\b", "five"),
+            (r"\bfi eld\b", "field"),
+            (r"\bfi nalising\b", "finalising"),
+            (r"\s{2,}", " "),  # Multiple spaces
+            (r"([a-z])([A-Z])", r"\1 \2"),  # Missing spaces between words
+        ]
+
         # Create the LangChain text splitter
         self.text_splitter = RecursiveCharacterTextSplitter(
             chunk_size=self.config.target_chunk_size * 6,
@@ -56,19 +72,26 @@ class SmartChunker:
         )
 
     def chunk_document(self, text: str, document_name: str = "document") -> List[dict]:
-        # Use spaCy for better text preprocessing
-        doc = self.nlp(text)
+        # Step 1: Clean OCR artifacts
+        cleaned_text = self._preprocess_text(text)
+
+        # Step 2: Use spaCy for better text preprocessing
+        doc = self.nlp(cleaned_text)
 
         # Use spaCy's sentence segmentation for cleaner text
         sentences = [sent.text.strip() for sent in doc.sents if sent.text.strip()]
-        cleaned_text = " ".join(sentences)
+        processed_text = " ".join(sentences)
 
-        # Use LangChain to split the cleaned text
-        chunks = self.text_splitter.split_text(cleaned_text)
+        # Step 3: Use LangChain to split the cleaned text
+        chunks = self.text_splitter.split_text(processed_text)
 
-        # Convert to the format expected by upload.py
+        # Step 4: Apply quality filtering
         result = []
         for i, chunk in enumerate(chunks):
+            # Quality check - only keep meaningful chunks
+            if not self._is_meaningful_text(chunk):
+                continue
+
             word_count = len(chunk.split())
 
             # Skip chunks that are too small
@@ -93,6 +116,44 @@ class SmartChunker:
             )
 
         return result
+
+    def _preprocess_text(self, text: str) -> str:
+        """Clean text while preserving document structure (from original code)."""
+        # Unicode normalization
+        text = unicodedata.normalize("NFKC", text)
+
+        # Fix common OCR artifacts
+        for pattern, replacement in self.ocr_fixes:
+            text = re.sub(pattern, replacement, text)
+
+        # Remove control characters but preserve meaningful whitespace
+        text = "".join(char for char in text if char.isprintable() or char in "\n\t")
+
+        # Normalize excessive whitespace but preserve paragraph breaks
+        text = re.sub(r"[ \t]+", " ", text)  # Multiple spaces/tabs → single space
+        text = re.sub(r"\n[ \t]*\n", "\n\n", text)  # Clean paragraph breaks
+        text = re.sub(r"\n{3,}", "\n\n", text)  # Max 2 newlines
+
+        return text.strip()
+
+    def _is_meaningful_text(self, text: str) -> bool:
+        """Check if text chunk has sufficient information content (from original)."""
+        words = text.split()
+
+        # Quality filters
+        if len(words) < 5:  # Too short
+            return False
+
+        # Check alphabetic content ratio
+        alpha_chars = sum(1 for c in text if c.isalpha())
+        if alpha_chars / len(text) < 0.6:  # Less than 60% letters
+            return False
+
+        # Check for repeated patterns (OCR artifacts)
+        if len(set(words)) / len(words) < 0.3:  # Too repetitive
+            return False
+
+        return True
 
     def _classify_chunk_type(self, doc) -> str:
         """Use spaCy to classify chunk content type"""
