@@ -553,6 +553,7 @@ make deploy-all
 ```
 
 ---
+
 ### Railway Deployment (Cloud Platform)
 
 **⚠️ Important Railway Configuration Notes**
@@ -562,6 +563,7 @@ Railway is a convenient cloud platform, but it has specific networking behavior 
 #### The Issue: Qdrant Client Timeouts
 
 **Symptoms:**
+
 - Qdrant service responds normally to `curl` requests
 - Basic HTTP requests from the backend work fine
 - The Qdrant Python client times out during initialization
@@ -577,7 +579,7 @@ The Qdrant Python client has default timeout settings that don't work well with 
 ```python
 # In your qdrant_service.py - essential for Railway
 client = QdrantClient(
-    url=settings.QDRANT_URL, 
+    url=settings.QDRANT_URL,
     prefer_grpc=False,
     timeout=60,  # Increase from default to 60s
     https=True,
@@ -598,25 +600,50 @@ except Exception as e:
     logger.error(f"HTTP test failed: {e}")
 ```
 
-**3. Handle Startup Reliability:**
+**3. On-Demand Collection Creation (Recommended):**
+
+Instead of creating collections at startup (which can cause deployment failures), create them when needed:
 
 ```python
-# Robust startup retry logic for Railway
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    retries = 10
-    delay = 3
-    for attempt in range(retries):
-        try:
-            create_collection(client, settings.QDRANT_COLLECTION_NAME, vector_size=1536)
-            logger.info("Qdrant collection created successfully on startup")
-            break
-        except Exception as e:
-            logger.warning(f"Attempt {attempt + 1} failed: {e}")
-            if attempt < retries - 1:
-                await asyncio.sleep(delay)
-                delay *= 2
-    yield
+# In your upload route - more robust for Railway
+def ensure_collection_exists():
+    """Ensure the Qdrant collection exists, create if it doesn't."""
+    try:
+        client.get_collection(settings.QDRANT_COLLECTION_NAME)
+        logger.info(f"Collection already exists")
+    except Exception:
+        logger.info(f"Creating collection")
+        create_collection(client, settings.QDRANT_COLLECTION_NAME, vector_size=1536)
+        logger.info(f"Collection created successfully")
+
+@router.post("/upload")
+async def upload_file(file: UploadFile = File(...)):
+    try:
+        # Create collection on-demand - self-healing approach
+        ensure_collection_exists()
+
+        # Continue with file processing...
+    except Exception as e:
+        # Handle errors gracefully
+        pass
+```
+
+**Benefits of On-Demand Creation:**
+
+- ✅ Service starts immediately (no startup dependencies)
+- ✅ Self-healing (recreates collection if deleted)
+- ✅ Railway-friendly (no complex retry logic needed)
+- ✅ Fault tolerant (survives Qdrant restarts)
+
+**Simplified main.py (no lifespan needed):**
+
+```python
+from fastapi import FastAPI
+from routes import health, upload, search
+
+app = FastAPI()  # No complex startup logic!
+app.include_router(upload.router, prefix="/api")
+app.include_router(search.router, prefix="/api")
 ```
 
 #### Railway-Specific Environment Variables
@@ -635,11 +662,13 @@ QDRANT_TIMEOUT=60
 #### Service Configuration Checklist
 
 **Railway Qdrant Service Settings:**
+
 - ✅ Public networking enabled on port 6333
 - ✅ Service name exactly matches your URL expectations
 - ✅ No authentication required (or properly configured if enabled)
 
 **Railway Backend Service Settings:**
+
 - ✅ Environment variables properly set
 - ✅ Same region as Qdrant service (EU West recommended)
 - ✅ Sufficient resource limits (timeouts can be caused by resource starvation)
@@ -657,6 +686,7 @@ QDRANT_URL=http://qdrant.railway.internal:6333  # Can be unreliable
 #### Deployment Steps for Railway
 
 1. **Deploy Qdrant Service:**
+
    ```bash
    # Use official Qdrant Docker image
    # Source: qdrant/qdrant:latest
@@ -664,21 +694,23 @@ QDRANT_URL=http://qdrant.railway.internal:6333  # Can be unreliable
    ```
 
 2. **Deploy Backend Service:**
+
    ```bash
    # Set environment variables:
    QDRANT_URL=https://your-qdrant-production-xxxx.up.railway.app
    OPENAI_API_KEY=your_openai_key
-   
+
    # Deploy and watch logs for successful collection creation
    ```
 
 3. **Test the Pipeline:**
+
    ```bash
    # Test search endpoint (should return empty results initially)
    curl -X POST "https://your-backend-production-xxxx.up.railway.app/api/search" \
      -H "Content-Type: application/json" \
      -d '{"query": "test", "limit": 5}'
-   
+
    # Should return: {"results":[],"query_time_ms":0,"total_found":0}
    ```
 
@@ -689,6 +721,7 @@ Railway uses a proxy layer for public networking that adds connection overhead. 
 #### Alternative: Self-Hosted Qdrant
 
 If Railway continues to be problematic, consider:
+
 - **Docker Compose locally** (works perfectly)
 - **Kubernetes deployment** (as shown in main README)
 - **Qdrant Cloud** (official hosted service)
