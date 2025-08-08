@@ -57,6 +57,9 @@ async def search_documents(request: SearchRequest):
         if not raw_results:
             return SearchResponse(results=[], query_time_ms=0, total_found=0)
 
+        # Map original payloads by id for later metadata enrichment
+        payload_by_id = {str(r["id"]): r.get("payload", {}) for r in raw_results}
+
         documents = [result["payload"]["text"] for result in raw_results]
         idf_map = compute_idf(documents)
 
@@ -77,22 +80,37 @@ async def search_documents(request: SearchRequest):
             ranked_results = raw_results[: request.limit]
             processing_time_ms = None  # fallback to Python timer
 
+        # Minimal, safe metadata fields to expose by default
+        METADATA_WHITELIST = {
+            "file_name",
+            "content_type",
+            "chunk_index",
+            "word_count",
+            "chunk_type",
+        }
+
         search_results = []
         for result in ranked_results:
+            # Start with metadata from Rust (if present)
+            base_metadata = result.get("metadata", {})
+            # Merge with selected fields from the original Qdrant payload
+            original_payload = payload_by_id.get(str(result.get("id"))) or {}
+            enriched = {
+                k: v for k, v in original_payload.items() if k in METADATA_WHITELIST
+            }
+            # Rust-provided keys should win if overlaps
+            merged_metadata = {**enriched, **base_metadata}
+            # Prefer "text" field from Rust response.
+            # Fallback to payload.text for raw Qdrant items when Rust isn't used.
+            text_value = result.get("text")
+            if not text_value and "payload" in result:
+                text_value = result["payload"].get("text")
             search_results.append(
                 SearchResult(
                     id=str(result["id"]),
-                    text=(
-                        result["payload"]["text"]
-                        if "payload" in result
-                        else result["text"]
-                    ),
+                    text=text_value or "",
                     score=result["score"],
-                    metadata=(
-                        result["payload"]["metadata"]
-                        if "payload" in result and "metadata" in result["payload"]
-                        else result.get("metadata", {})
-                    ),
+                    metadata=merged_metadata,
                 )
             )
 
