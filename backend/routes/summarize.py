@@ -15,6 +15,21 @@ router = APIRouter()
 
 @router.post("/summarize", response_model=SummarizeResponse)
 async def summarize_search_results(request: SummarizeRequest):
+    """
+    Summarize a set of search results using the chat model.
+
+    Request body (SummarizeRequest):
+    - query: The original user query providing context for the summary.
+    - search_results: List of SearchResult items; their text fields are
+        summarized. Must be non-empty.
+    - style: Optional summary style hint ("comprehensive", "brief", "bullet_points").
+
+    Returns:
+    - SummarizeResponse with:
+        - summary: The generated summary string.
+        - query_time_ms: Processing time in milliseconds.
+        - chunks_processed: Number of result chunks included in the summary.
+    """
     try:
         if not settings.OPENAI_API_KEY:
             raise HTTPException(

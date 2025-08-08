@@ -19,7 +19,7 @@ async def upload_file(file: UploadFile = File(...)):
     """
     Upload and process a document with advanced semantic chunking.
 
-    This endpoint now uses SmartChunker for better text segmentation that:
+    This endpoint uses SmartChunker for better text segmentation that:
     - Preserves sentence and paragraph boundaries
     - Maintains context with overlapping chunks
     - Handles OCR artifacts and document structure

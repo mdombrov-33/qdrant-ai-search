@@ -15,6 +15,26 @@ router = APIRouter()
 
 @router.post("/search", response_model=SearchResponse)
 async def search_documents(request: SearchRequest):
+    """
+    Search documents by semantic similarity and IDF-aware re-ranking.
+
+    Request body (SearchRequest):
+    - query: User query text to embed and search against.
+    - limit: Max results to return (fetches up to limit*5 candidates,
+        capped at 100).
+    - threshold: Minimum vector similarity score for candidate retrieval
+        and filtering.
+
+    Internals:
+    - idf_map: Computed from candidates via utils.idf.compute_idf and passed
+        to the re-ranker to boost rare terms.
+
+    Returns:
+    - SearchResponse with:
+        - results: list of {id, text, score, metadata}
+        - query_time_ms: processing time in ms
+        - total_found: number of raw candidates found
+    """
     try:
         if not settings.QDRANT_URL:
             raise HTTPException(status_code=500, detail="Qdrant URL is not configured")
