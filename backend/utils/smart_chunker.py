@@ -85,9 +85,17 @@ class SmartChunker:
         # Step 3: Use LangChain to split the cleaned text
         chunks = self.text_splitter.split_text(processed_text)
 
-        # Step 4: Apply quality filtering
+        # Step 4: Clean up chunks (remove leading separators)
+        cleaned_chunks = []
+        for chunk in chunks:
+            # Remove leading punctuation and whitespace
+            cleaned_chunk = chunk.lstrip(". !?").strip()
+            if cleaned_chunk:  # Only keep non-empty chunks
+                cleaned_chunks.append(cleaned_chunk)
+
+        # Step 5: Apply quality filtering
         result = []
-        for i, chunk in enumerate(chunks):
+        for i, chunk in enumerate(cleaned_chunks):
             # Quality check - only keep meaningful chunks
             if not self._is_meaningful_text(chunk):
                 continue
