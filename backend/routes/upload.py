@@ -5,13 +5,28 @@ from utils.text_cleaner import clean_text
 from utils.smart_chunker import SmartChunker, ChunkConfig
 from utils.exception_handler import handle_custom_exception
 from services.embedding import embed_chunks
-from services.qdrant_service import insert_vectors_batch, client
+from services.qdrant_service import insert_vectors_batch, client, create_collection
 from config import settings
 from utils.logging_config import logger
 from exceptions import QdrantSearchError
 import uuid
 
 router = APIRouter()
+
+
+def ensure_collection_exists():
+    """Ensure the Qdrant collection exists, create if it doesn't."""
+    try:
+        # Try to get collection info - this will fail if collection doesn't exist
+        client.get_collection(settings.QDRANT_COLLECTION_NAME)
+        logger.info(f"Collection '{settings.QDRANT_COLLECTION_NAME}' already exists")
+    except Exception:
+        # Collection doesn't exist, create it
+        logger.info(f"Creating collection '{settings.QDRANT_COLLECTION_NAME}'")
+        create_collection(client, settings.QDRANT_COLLECTION_NAME, vector_size=1536)
+        logger.info(
+            f"Collection '{settings.QDRANT_COLLECTION_NAME}' created successfully"
+        )
 
 
 @router.post("/upload")
@@ -26,6 +41,9 @@ async def upload_file(file: UploadFile = File(...)):
     - Provides better search results through semantic coherence
     """
     try:
+        # Ensure collection exists before processing file
+        ensure_collection_exists()
+
         MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB
         content = await file.read()
 
