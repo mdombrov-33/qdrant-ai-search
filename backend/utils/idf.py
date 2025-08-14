@@ -2,6 +2,7 @@ import math
 from collections import defaultdict
 
 
+# Replace later TF-IDF from scikit-learn
 def compute_idf(documents):
     """
     IDF (Inverse Document Frequency) is a classic information retrieval metric.
