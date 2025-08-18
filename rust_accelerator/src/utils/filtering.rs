@@ -1,17 +1,9 @@
-//! Early filtering utilities to remove low-quality results.
-//!
-//! This module implements filters that catch obviously bad results before
-//! we spend CPU time on expensive scoring algorithms. It's like a first-pass
-//! quality gate.
+//! Utilities for early filtering of low-quality results.
 
 use crate::models::request::SearchResult;
 use std::collections::HashSet;
 
 /// Handles early filtering of search results.
-///
-/// This component decides which results are worth processing and which
-/// should be discarded immediately. It's designed to be very fast since
-/// it runs on every result.
 pub struct ResultFilter {
     /// Minimum text length to be considered valid
     min_text_length: usize,

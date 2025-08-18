@@ -1,17 +1,11 @@
 //! Text similarity algorithms for deduplication.
-//!
-//! This module implements various text similarity measures used to identify
-//! and remove duplicate or near-duplicate results from the search output.
 
 use crate::models::internal::EnhancedResult;
 use textdistance::nstr::jaccard;
 
 /// Handles text similarity calculations and deduplication.
-///
-/// This component uses various algorithms to measure how similar two pieces
-/// of text are, then removes results that are too similar to each other.
 pub struct SimilarityCalculator {
-    /// Similarity threshold above which we consider results duplicates
+    /// Similarity threshold for deduplication
     deduplication_threshold: f64,
 }
 
@@ -23,17 +17,10 @@ impl SimilarityCalculator {
     }
 
     /// Removes duplicate results using text similarity analysis.
-    ///
-    /// This function takes a list of results and removes any that are too
-    /// similar to results with higher scores. It preserves the highest-scoring
-    /// version of any group of similar results.
-    ///
-    /// The algorithm is O(n²) in the worst case, but with early termination
-    /// and optimizations it's usually much faster in practice.
     pub fn remove_duplicates(&self, results: Vec<EnhancedResult>) -> Vec<EnhancedResult> {
         let mut unique_results = Vec::new();
 
-        // Process results in score order (already sorted by caller)
+        // Process results in score order
         for candidate in results {
             let is_duplicate = unique_results.iter().any(|existing: &EnhancedResult| {
                 // Use Jaccard similarity to compare texts
@@ -52,12 +39,6 @@ impl SimilarityCalculator {
     }
 
     /// Calculates Jaccard similarity between two texts.
-    ///
-    /// Jaccard similarity measures the overlap between two sets:
-    /// similarity = |intersection| / |union|
-    ///
-    /// For text, we treat each text as a set of words, then calculate:
-    /// - intersection = words that appear in both texts
     /// - union = all unique words from both texts
     ///
     /// Example:

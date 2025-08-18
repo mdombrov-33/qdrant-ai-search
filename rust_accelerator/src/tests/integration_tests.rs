@@ -1,7 +1,4 @@
-//! Integration tests for the HTTP API.
-//!
-//! These tests verify that the entire HTTP pipeline works correctly,
-//! from receiving JSON requests to returning JSON responses.
+
 
 use actix_web::{App, test, web};
 use rust_accelerator::handlers;

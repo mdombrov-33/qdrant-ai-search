@@ -1,40 +1,30 @@
-//! Advanced scoring algorithms for result enhancement.
-//!
-//! This module contains all the mathematical algorithms we use to improve
-//! upon the basic vector similarity scores from Qdrant. Each algorithm
-//! targets a different aspect of result quality.
+//! Scoring algorithms for result enhancement.
 
 use crate::models::internal::QueryFeatures;
 use crate::models::request::SearchResult;
 
 /// Configuration for score weighting.
-///
-/// These constants control how much each algorithm contributes to the final score.
 pub struct ScoreWeights {
-    pub text_quality: f64,        // How much to weight content quality
-    pub keyword_matching: f64,    // How much to weight keyword overlap
-    pub length_optimization: f64, // How much to weight ideal length
-    pub position_decay: f64,      // How much to weight original position
-    pub completeness: f64,        // How much to weight sentence completeness
+    pub text_quality: f64,        // Content quality weight
+    pub keyword_matching: f64,    // Keyword overlap weight
+    pub length_optimization: f64, // Ideal length weight
+    pub position_decay: f64,      // Position weight
+    pub completeness: f64,        // Completeness weight
 }
 
 impl Default for ScoreWeights {
     fn default() -> Self {
         Self {
-            text_quality: 0.3,        // Reduced weight - be less punitive
-            keyword_matching: 0.4,    // Increased - reward keyword matches more
-            length_optimization: 0.2, // Reduced weight - length less important
-            position_decay: 0.02,     // Reduced - minimal position penalty
-            completeness: 0.05,       // Reduced - minimal completeness bonus
+            text_quality: 0.3,
+            keyword_matching: 0.4,
+            length_optimization: 0.2,
+            position_decay: 0.02,
+            completeness: 0.05,
         }
     }
 }
 
 /// Calculates enhanced scores using multiple algorithms.
-///
-/// This is the heart of our re-ranking system. It takes the basic similarity
-/// score from Qdrant and enhances it using domain knowledge about what makes
-/// a good search result.
 pub struct ScoreCalculator {
     weights: ScoreWeights,
 }
@@ -46,16 +36,7 @@ impl ScoreCalculator {
         }
     }
 
-    /// Calculates an enhanced score using multiple algorithms.
-    ///
-    /// This function combines several scoring strategies:
-    /// 1. Text quality assessment (penalize fragments, boost complete text)
-    /// 2. Keyword matching (TF-IDF inspired scoring)
-    /// 3. Length optimization (sweet spot scoring)
-    /// 4. Position-based decay (slight preference for earlier results)
-    /// 5. Completeness bonus (reward complete sentences)
-    ///
-    /// The final score is a weighted combination of all these factors.
+    /// Calculates an enhanced score using multiple strategies.
     pub fn calculate_enhanced_score(
         &self,
         result: &SearchResult,

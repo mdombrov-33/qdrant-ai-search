@@ -1,8 +1,4 @@
 //! Text preprocessing and analysis utilities.
-//!
-//! This module handles all the text-related operations like tokenization,
-//! stop word removal, and feature extraction. It's like the NLP preprocessing
-//! pipeline in a machine learning project.
 
 use crate::models::internal::QueryFeatures;
 use rust_stemmers::{Algorithm, Stemmer};
@@ -10,21 +6,13 @@ use std::collections::{HashMap, HashSet};
 use stop_words::{LANGUAGE, get};
 
 /// Handles text analysis and preprocessing operations.
-///
-/// This struct encapsulates all text-related functionality and holds
-/// precomputed data structures (like stop words) for efficiency.
 pub struct TextAnalyzer {
     /// Set of common words to ignore during analysis
-    /// Using HashSet for O(1) lookup time vs Vec which would be O(n)
     stop_words: HashSet<String>,
 }
 
 impl TextAnalyzer {
     /// Creates a new TextAnalyzer with preloaded stop words.
-    ///
-    /// Stop words are common words like "the", "and", "is" that don't carry
-    /// much meaning for search relevance. We filter these out to focus on
-    /// meaningful terms.
     pub fn new() -> Self {
         let stop_words = get(LANGUAGE::English)
             .into_iter()
@@ -35,17 +23,6 @@ impl TextAnalyzer {
     }
 
     /// Extracts meaningful features from a search query.
-    ///
-    /// This is like the preprocessing step in NLP pipelines:
-    /// 1. Normalize text (lowercase)
-    /// 2. Tokenize (split into words and phrases)
-    /// 3. Filter stop words and short terms
-    /// 4. Apply stemming (basic trimming of trailing 's')
-    /// 5. Count frequencies
-    ///
-    /// Example: "How do neural networks learn?"
-    /// → meaningful_terms: ["neural", "networks", "learn", "neural networks"]
-    /// → word_frequencies: {"neural":1, "networks":1, "learn":1, "neural networks":1}
     pub fn extract_query_features(
         &self,
         query: &str,

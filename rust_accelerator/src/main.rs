@@ -1,8 +1,3 @@
-//! Main entry point for the Rust re-ranking service.
-//!
-//! This file sets up the HTTP server, configures logging, registers routes,
-//! and starts the application.
-
 use actix_web::{App, HttpResponse, HttpServer, Result, middleware::Logger, web};
 use prometheus::{Counter, Encoder, TextEncoder, register_counter};
 use std::sync::OnceLock;
@@ -16,7 +11,7 @@ mod utils;
 #[cfg(test)]
 mod tests;
 
-// Global metrics - this will count total requests to /re-rank
+// Prometheus counter for /re-rank requests
 static REQUEST_COUNTER: OnceLock<Counter> = OnceLock::new();
 
 fn get_request_counter() -> &'static Counter {
@@ -37,26 +32,19 @@ async fn metrics_handler() -> Result<HttpResponse> {
         .body(buffer))
 }
 
-/// Main function - entry point of the application.
-///
-/// The `#[actix_web::main]` attribute sets up the async runtime.
-/// This is similar to how Node.js handles async operations, but Rust
-/// requires explicit async runtime setup.
+/// Application entry point.
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     // Initialize logging
-    // This sets up structured logging based on RUST_LOG environment variable
-    // Set RUST_LOG=info for normal logging, RUST_LOG=debug for verbose logging
     env_logger::init();
 
     println!(" Rust Accelerator - 2.4.0");
 
-    // Initialize metrics counter at startup so it appears in /metrics even with 0 requests
+    // Initialize metrics counter
     let _counter = get_request_counter();
     println!(" Metrics initialized: rerank_requests_total counter ready");
 
     // Start HTTP server
-    // Wrap bind in match to catch errors and log them gracefully
     let server = HttpServer::new(|| {
         App::new()
             // Add request logging middleware
