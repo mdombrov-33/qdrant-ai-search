@@ -212,8 +212,7 @@ curl -X POST "http://localhost:8000/api/summarize" \
       }
     ],
     "style": "comprehensive"
-  }' \
-  http://localhost:8000/api/summarize
+  }'
 ```
 
 Visit `http://localhost:8000/docs` for interactive API documentation.
