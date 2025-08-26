@@ -858,9 +858,3 @@ pre-commit run --all-files
 - **Clippy**: Rust linting with strict warnings
 
 ---
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
----
