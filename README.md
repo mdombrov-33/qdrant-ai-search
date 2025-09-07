@@ -856,5 +856,3 @@ pre-commit run --all-files
 - **Ruff**: Python linting with auto-fix
 - **Rust fmt**: Rust code formatting verification
 - **Clippy**: Rust linting with strict warnings
-
----
