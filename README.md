@@ -156,15 +156,6 @@ sequenceDiagram
 
 ## 🚀 Quick Start
 
-### Prerequisites
-
-- Docker & Docker Compose
-- Python 3.11+
-- Rust 1.70+
-- Kubernetes cluster (optional, for production)
-
-### Setup & Usage
-
 ```bash
 # Clone and setup
 git clone https://github.com/yourusername/qdrant-ai-search.git
